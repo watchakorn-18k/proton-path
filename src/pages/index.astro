@@ -4,6 +4,10 @@ import RouteMap from '../components/RouteMap.astro';
 import ThemeSwitcher from '../components/ThemeSwitcher.astro';
 import { getCollection } from 'astro:content';
 
+// Prefix internal absolute paths with the deploy base (/proton-path/)
+const base = import.meta.env.BASE_URL;
+const withBase = (p: string) => `${base}${p.replace(/^\//, '')}`;
+
 const trailPosts = (await getCollection('blog'))
 	.map((post) => ({
 		slug: post.id,
@@ -19,11 +23,11 @@ const trailPoints = trailPosts.map((post) => ({
 	date: post.date,
 	walkDuration: post.walkDuration,
 	difficulty: post.difficulty,
-	blogUrl: `/blog/${post.slug}/`,
+	blogUrl: withBase(`/blog/${post.slug}/`),
 }));
 
 const youtubeUrl = 'https://www.youtube.com/@proton-path';
-const blogUrl = '/blog/';
+const blogUrl = withBase('/blog/');
 
 const channelId = 'UCrXDJRi5HCbT9sMJr20vZNA';
 
@@ -94,13 +98,13 @@ const fieldNotes = [
 <html lang="th">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content="Proton Path - บันทึกเส้นทางเดินป่า trekking และ outdoor ในประเทศไทย" />
 		<meta property="og:title" content="Proton Path - บันทึกเส้นทางเดินป่า" />
 		<meta property="og:description" content="ช่อง YouTube สายเดินป่า trekking และ outdoor ในประเทศไทย" />
-		<meta property="og:image" content="/images/trail-hero.webp" />
+		<meta property="og:image" content={new URL(withBase('/images/trail-hero.webp'), Astro.site)} />
 		<title>Proton Path - บันทึกเส้นทางเดินป่า</title>
 	</head>
 	<body>
@@ -115,7 +119,7 @@ const fieldNotes = [
 				<a href="#video">คลิปล่าสุด</a>
 				<a href="#route">เส้นทาง</a>
 				<a href="#about">เกี่ยวกับ</a>
-				<a href="/blog/">บล็อก</a>
+				<a href={blogUrl}>บล็อก</a>
 				<a href={youtubeUrl} target="_blank" rel="noopener noreferrer">YouTube</a>
 			</nav>
 			<ThemeSwitcher />
@@ -124,7 +128,7 @@ const fieldNotes = [
 		<main id="content">
 			<section class="hero-section">
 				<img
-					src="/images/trail-hero.webp"
+					src={withBase('/images/trail-hero.webp')}
 					alt="เส้นทางภูเขาในป่าหมอกภาคตะวันตกของไทย"
 					class="hero-image"
 				/>
@@ -178,7 +182,7 @@ const fieldNotes = [
 						rel="noopener noreferrer"
 					>
 						<img
-							src={featuredVideo?.thumbnail ?? '/images/route-texture.webp'}
+							src={featuredVideo?.thumbnail ?? withBase('/images/route-texture.webp')}
 							alt={featuredVideo?.title ?? 'พื้นทางเดินป่าเปียก มีหิน มอส และใบไม้'}
 						/>
 						<div class="video-caption">
@@ -219,9 +223,9 @@ const fieldNotes = [
 
 				<div class="journal-layout reveal delay-one" data-journal>
 					{latestTrailPost && (
-						<a class="journal-feature" href={`/blog/${latestTrailPost.slug}/`} data-journal-feature>
-							<img src={latestTrailPost.image} alt={latestTrailPost.title} data-journal-image />
-								<img src={latestTrailPost.image} alt="" aria-hidden="true" data-journal-next-image />
+						<a class="journal-feature" href={withBase(`/blog/${latestTrailPost.slug}/`)} data-journal-feature>
+							<img src={withBase(latestTrailPost.image)} alt={latestTrailPost.title} data-journal-image />
+								<img src={withBase(latestTrailPost.image)} alt="" aria-hidden="true" data-journal-next-image />
 							<div class="journal-feature-content">
 								<span class="journal-number" data-journal-number>{String(latestTrailPost.id).padStart(2, '0')}</span>
 								<div>
@@ -237,12 +241,12 @@ const fieldNotes = [
 					<div class="journal-stack">
 						{sortedTrailPosts.map((post, index) => (
 							<a
-								href={`/blog/${post.slug}/`}
+								href={withBase(`/blog/${post.slug}/`)}
 								class="journal-row"
 								data-journal-trigger
 								data-title={post.title}
-								data-image={post.image}
-								data-url={`/blog/${post.slug}/`}
+								data-image={withBase(post.image)}
+								data-url={withBase(`/blog/${post.slug}/`)}
 								data-number={String(post.id).padStart(2, '0')}
 								data-meta={formatTrailMeta(post)}
 								data-page={Math.floor(index / 5) + 1}
@@ -325,11 +329,11 @@ const fieldNotes = [
 				<div class="about-grid reveal delay-one">
 					<div class="image-strip">
 						<img
-							src="/images/trail-hero.webp"
+							src={withBase('/images/trail-hero.webp')}
 							alt="แนวสันเขาและหมอกในป่าภูเขา"
 						/>
 						<img
-							src="/images/route-texture.webp"
+							src={withBase('/images/route-texture.webp')}
 							alt="รายละเอียดพื้นทางเดินป่าที่เปียกและลื่น"
 						/>
 					</div>
