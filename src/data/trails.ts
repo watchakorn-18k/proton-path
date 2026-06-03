@@ -69,6 +69,20 @@ export const trailPosts: TrailPost[] = [
 		name: 'น้ำตกหมันแดง',
 		nameEn: 'Man Daeng Waterfall',
 		coords: [16.942118833250092, 101.06469846699815]
+	},
+	{
+		id: 5,
+		slug: 'phu-soi-dao',
+		title: 'เที่ยวเดินป่า | อุทยานแห่งชาติภูสอยดาว ลานสนหน้าฝน',
+		description: 'บันทึกการเดินป่าขึ้นลานสนภูสอยดาว เส้นทางชันสลับสบาย เหนื่อยแต่ไม่หนักเท่าเขาหลวงสุโขทัย กับทะเลหมอกหน้าฝนที่สวยจนลืมความเหนื่อย',
+		date: '2025-09-16',
+		image: '/images/phu-soi-dao/cover.webp',
+		tags: ['hiking', 'uttaradit'],
+		location: 'น้ำปาด อุตรดิตถ์ / ชาติตระการ พิษณุโลก',
+		difficulty: 'ปานกลาง',
+		name: 'อุทยานแห่งชาติภูสอยดาว',
+		nameEn: 'Phu Soi Dao National Park',
+		coords: [17.738090084648288, 100.98906317281674]
 	}
 ];
 
