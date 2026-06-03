@@ -6,7 +6,7 @@ tags: ["hiking", "kanchanaburi", "waterfall"]
 image: /images/erawan/cover.webp
 id: 7
 location: "กาญจนบุรี"
-difficulty: "ง่าย ร้อน"
+difficulty: "ง่าย"
 name: "อุทยานแห่งชาติน้ำตกเอรวัณ"
 nameEn: "Erawan National Park"
 coords: [14.358938641390635, 99.14044130743585]

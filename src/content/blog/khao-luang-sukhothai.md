@@ -6,7 +6,7 @@ tags: ["hiking", "sukhothai"]
 image: /images/khao-luang/cover.webp
 id: 2
 location: "สุโขทัย"
-difficulty: "ชันมาก"
+difficulty: "ยาก"
 walkDuration: "3-4 ชม. ขึ้นยอด"
 name: "เขาหลวงสุโขทัย"
 nameEn: "Khao Luang Sukhothai"

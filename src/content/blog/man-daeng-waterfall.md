@@ -6,7 +6,7 @@ tags: ["hiking", "phitsanulok"]
 image: /images/man-daeng/cover.webp
 id: 4
 location: "ภูหินร่องกล้า พิษณุโลก"
-difficulty: "ลื่นและทากชุม"
+difficulty: "ปานกลาง"
 walkDuration: "4-6 ชม. ไป-กลับ"
 name: "น้ำตกหมันแดง"
 nameEn: "Man Daeng Waterfall"

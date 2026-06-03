@@ -59,24 +59,33 @@ const pointsData = JSON.stringify(points);
 			const tooltipMarkers: L.Marker[] = [];
 			let tooltipsVisible = true;
 
-			// Difficulty → pin color
-			const pinColors = {
-				'ยาก': '#e74c3c',
-				'ยากมาก': '#c0392b',
-				'ปานกลาง': '#f1c40f',
-				'ง่าย': '#2ecc71',
-				'ง่ายมาก': '#27ae60'
-			};
-			const defaultPinColor = '#a8b879';
+			// Difficulty → pin border colors only. All pins share the same dark fill.
+			const pinBorderConfigs = [
+				{ test: /ยากมาก/, border: '#e0564a' },
+				{ test: /ยาก|ชัน/, border: '#e8954e' },
+				{ test: /ปานกลาง/, border: '#e6c34d' },
+				{ test: /ง่ายมาก/, border: '#5fb87a' },
+				{ test: /ง่าย/, border: '#5fb87a' }
+			];
+			const defaultBorder = '#a8b879';
+			const commonFill = 'var(--forest-900)';
+
+			function getBorderForDifficulty(diff) {
+				if (!diff) return defaultBorder;
+				for (const cfg of pinBorderConfigs) {
+					if (cfg.test.test(diff)) return cfg.border;
+				}
+				return defaultBorder;
+			}
 
 			// Create markers for each point
 			pointsData.forEach((point) => {
-				const color = pinColors[point.difficulty] || defaultPinColor;
+				const border = getBorderForDifficulty(point.difficulty);
 				const customIcon = L.divIcon({
 					className: 'custom-pin',
-					html: `<div class="pin-inner" data-number="${point.id}" style="background: ${color};"></div>`,
-					iconSize: [36, 36],
-					iconAnchor: [18, 36]
+					html: `<div class="pin-inner" data-number="${point.id}" style="background: ${commonFill}; border-color: ${border}; --pin-border: ${border};"></div>`,
+					iconSize: [34, 34],
+					iconAnchor: [17, 34]
 				});
 
 				const pointDate = formatDate(point.date);
@@ -266,22 +275,22 @@ const pointsData = JSON.stringify(points);
 
 	:global(.pin-inner) {
 		position: relative;
-		width: 36px;
-		height: 36px;
-		background: var(--moss);
-		border: 3px solid white;
+		width: 34px;
+		height: 34px;
+		background: var(--forest-900);
+		border: 2.5px solid var(--moss);
 		border-radius: 50% 50% 50% 0;
 		transform: rotate(-45deg);
-		box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+		box-shadow: 0 4px 10px rgb(7 17 13 / 0.55);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-weight: 800;
-		font-size: 1.1rem;
-		color: white;
+		font-size: 0.95rem;
+		color: var(--bone);
 		font-family: var(--font-heading);
 		cursor: pointer;
-		transition: transform 0.2s ease;
+		transition: transform 0.2s ease, box-shadow 0.2s ease;
 	}
 
 	/* Dynamic number from data attribute */
@@ -289,11 +298,14 @@ const pointsData = JSON.stringify(points);
 		content: attr(data-number);
 		transform: rotate(45deg);
 		display: block;
-		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+		color: var(--pin-border, var(--moss));
+		text-shadow: 0 1px 2px rgb(7 17 13 / 0.6);
 	}
 
 	:global(.custom-pin:hover .pin-inner) {
-		transform: rotate(-45deg) scale(1.1);
+		transform: rotate(-45deg) scale(1.12);
+		box-shadow: 0 6px 16px rgb(7 17 13 / 0.7);
+		z-index: 1000;
 	}
 
 	/* Always-visible map tooltip */

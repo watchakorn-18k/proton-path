@@ -6,7 +6,7 @@ tags: ["hiking", "kanchanaburi", "cave"]
 image: /images/lam-khlong-ngu/cover.webp
 id: 10
 location: "กาญจนบุรี"
-difficulty: "ปานกลาง ร้อน"
+difficulty: "ปานกลาง"
 walkDuration: "3-6 ชม. ตามกิจกรรมถ้ำ"
 name: "ถ้ำนกนางแอ่น ลำคลองงู"
 nameEn: "Lam Khlong Ngu National Park"

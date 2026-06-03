@@ -6,7 +6,7 @@ tags: ["hiking", "saraburi"]
 image: /images/krok-e-dok/cover.webp
 id: 3
 location: "แก่งคอย สระบุรี"
-difficulty: "ชันและลื่น"
+difficulty: "ปานกลาง"
 walkDuration: "4-6 ชม. ไป-กลับ"
 name: "น้ำตกโกรกอีดก"
 nameEn: "Krok E-Dok Waterfall"

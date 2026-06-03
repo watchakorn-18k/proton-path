@@ -6,7 +6,7 @@ tags: ["hiking", "kanchanaburi"]
 image: /images/khao-san-nok-wua/image-01.webp
 id: 6
 location: "สังขละบุรี กาญจนบุรี"
-difficulty: "ระยะไกล ร้อนมาก"
+difficulty: "ยาก"
 walkDuration: "6-8 ชม. ขึ้นสัน"
 name: "สันหนอกวัว"
 nameEn: "San Nok Wua"
