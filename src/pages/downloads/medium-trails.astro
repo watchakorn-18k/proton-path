@@ -18,12 +18,14 @@ const generatedFmt = new Intl.DateTimeFormat('th-TH', {
 	year: 'numeric'
 });
 
-const mediumTrails = (await getCollection('blog'))
+const excludeDifficulties = ['ง่าย', 'ง่ายมาก'];
+
+const trails = (await getCollection('blog'))
 	.map((post) => ({
 		slug: post.id,
 		...post.data,
 	}))
-	.filter((post) => post.difficulty === 'ปานกลาง')
+	.filter((post) => !excludeDifficulties.includes(post.difficulty))
 	.sort((a, b) => a.id - b.id);
 
 const generatedDate = generatedFmt.format(new Date());
@@ -82,7 +84,7 @@ const formatCost = (cost?: number) => (typeof cost === 'number' ? `${cost.toLoca
 				<div class="pdf-summary-grid">
 					<div>
 						<span>จำนวนเส้นทาง</span>
-						<strong>{mediumTrails.length}</strong>
+						<strong>{trails.length}</strong>
 						<small>ระดับปานกลาง</small>
 					</div>
 					<div>
@@ -99,9 +101,9 @@ const formatCost = (cost?: number) => (typeof cost === 'number' ? `${cost.toLoca
 
 				<section class="pdf-trail-section" aria-label="Medium difficulty trails">
 					<h2>รายการเส้นทาง</h2>
-					{mediumTrails.length > 0 ? (
+					{trails.length > 0 ? (
 						<div class="pdf-trail-list">
-							{mediumTrails.map((trail) => (
+							{trails.map((trail) => (
 								<article class="pdf-trail-card">
 									<div class="pdf-trail-image-wrapper">
 										<img class="pdf-trail-image" src={withBase(trail.image)} alt={trail.name} />
