@@ -11,6 +11,7 @@ walkDuration: "4-6 ชม. ไป-กลับ"
 name: "น้ำตกหมันแดง"
 nameEn: "Man Daeng Waterfall"
 coords: [16.942118833250092, 101.06469846699815]
+cost: 2500
 ---
 
 ![ป้ายอุทยานแห่งชาติภูหินร่องกล้า](/images/man-daeng/cover.webp)

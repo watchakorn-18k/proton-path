@@ -11,6 +11,7 @@ walkDuration: "6-8 ชม. ขึ้นสัน"
 name: "สันหนอกวัว"
 nameEn: "San Nok Wua"
 coords: [15.085065548057798, 98.66096733814479]
+cost: 2460
 ---
 
 ![วิวเส้นทางสันหนอกวัว](/images/khao-san-nok-wua/image-01.webp)

@@ -11,6 +11,7 @@ walkDuration: "3-6 ชม. ตามกิจกรรมถ้ำ"
 name: "ถ้ำนกนางแอ่น ลำคลองงู"
 nameEn: "Lam Khlong Ngu National Park"
 coords: [14.819479629118574, 98.83823968427374]
+cost: 2080
 ---
 
 ![ถ้ำนกนางแอ่น อุทยานแห่งชาติลำคลองงู](/images/lam-khlong-ngu/image-1.webp)

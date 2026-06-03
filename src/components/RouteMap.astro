@@ -8,6 +8,7 @@ export interface TrailPoint {
 	date?: string;
 	walkDuration?: string;
 	difficulty?: string;
+	cost?: number;
 	blogUrl: string;
 }
 
@@ -100,11 +101,25 @@ const pointsData = JSON.stringify(points);
 				});
 
 				const pointDate = formatDate(point.date);
-				const metaParts = [point.nameEn, pointDate, point.walkDuration].filter(Boolean);
+				const metaParts = [point.nameEn, pointDate].filter(Boolean);
+				const stats = [
+					point.difficulty ? { label: 'ความยาก', value: point.difficulty } : null,
+					point.walkDuration ? { label: 'ระยะเวลา', value: point.walkDuration } : null,
+					point.cost ? { label: 'ค่าใช้จ่าย', value: `~${point.cost.toLocaleString()} ฿` } : null
+				].filter(Boolean);
+				const statsHtml = stats.length
+					? `<div class="map-popup-stats">${stats.map((s) => `
+							<div class="map-popup-stat">
+								<span class="map-popup-stat-label">${s.label}</span>
+								<strong class="map-popup-stat-value">${s.value}</strong>
+							</div>
+						`).join('')}</div>`
+					: '';
 				const popupContent = `
-					<div style="min-width: 180px;">
+					<div class="map-popup" style="min-width: 200px;">
 						<b>${point.name}</b><br>
-						<small style="color: rgba(237, 231, 213, 0.7);">${metaParts.join(' · ')}</small><br>
+						<small style="color: rgba(237, 231, 213, 0.7);">${metaParts.join(' · ')}</small>
+						${statsHtml}
 						<a href="${point.blogUrl}" style="color: #a8b879; text-decoration: none; font-weight: 600; font-size: 0.9rem; display: inline-block; margin-top: 0.5rem;">
 							อ่านเพิ่มเติม →
 						</a>
@@ -135,6 +150,20 @@ const pointsData = JSON.stringify(points);
 
 				tooltipMarkers.push(marker);
 			});
+
+			// Travel-order route line, connecting points by id (1 → 2 → 3 ...).
+			// Built but kept off the map until toggled on.
+			const orderedCoords = [...pointsData]
+				.sort((a, b) => a.id - b.id)
+				.map((p) => p.coords);
+			const routeLine = L.polyline(orderedCoords, {
+				color: '#a8b879',
+				weight: 2.5,
+				opacity: 0.85,
+				dashArray: '6 8',
+				lineJoin: 'round'
+			});
+			let routeVisible = false;
 
 			// Scale tooltip text with zoom: zoomed out = smaller, zoomed in = full size.
 			// The var cascades onto the leaflet tooltip pane inside #route-map.
@@ -167,6 +196,7 @@ const pointsData = JSON.stringify(points);
 			const svgFsOpen = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>';
 			const svgFsClose = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"></path><path d="M21 8h-3a2 2 0 0 1-2-2V3"></path><path d="M3 16h3a2 2 0 0 1 2 2v3"></path><path d="M16 21v-3a2 2 0 0 1 2-2h3"></path></svg>';
 			const svgGear = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
+			const svgRoute = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"></circle><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"></path><circle cx="18" cy="5" r="3"></circle></svg>';
 
 			const toolbar = document.createElement('div');
 			toolbar.className = 'map-toolbar';
@@ -178,6 +208,7 @@ const pointsData = JSON.stringify(points);
 				<div class="map-toolbar-menu">
 					<button class="map-toolbar-btn" data-action="toggle-fullscreen" title="ดูแบบเต็มจอ">${svgFsOpen}<span>เต็มจอ</span></button>
 					<button class="map-toolbar-btn" data-action="toggle-satellite" title="สลับภาพถ่ายดาวเทียม">${svgSatellite}<span>ดาวเทียม</span></button>
+					${orderedCoords.length > 1 ? `<button class="map-toolbar-btn" data-action="toggle-route" title="แสดงเส้นลำดับการเดินทาง">${svgRoute}<span>เส้นทาง</span></button>` : ''}
 					${initialBounds ? `<button class="map-toolbar-btn" data-action="reset-view" title="กลับมุมมองรวม">${svgReset}<span>มุมรวม</span></button>` : ''}
 					<button class="map-toolbar-btn" data-action="toggle-meta" title="แสดงเฉพาะชื่อทริป">
 						${svgNameOnly}
@@ -504,6 +535,39 @@ const pointsData = JSON.stringify(points);
 
 	:global(.leaflet-popup-content) {
 		margin: 0.75rem !important;
+	}
+
+	/* Popup mini-stats */
+	:global(.map-popup-stats) {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+		gap: 0.4rem;
+		margin: 0.6rem 0 0.2rem;
+		padding: 0.5rem 0;
+		border-top: 1px solid var(--line);
+		border-bottom: 1px solid var(--line);
+	}
+
+	:global(.map-popup-stat) {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+	}
+
+	:global(.map-popup-stat-label) {
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 0.58rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	:global(.map-popup-stat-value) {
+		color: var(--bone);
+		font-size: 0.78rem;
+		font-weight: 700;
+		line-height: 1.2;
 	}
 
 	/* Custom pin styling - dynamic numbers */

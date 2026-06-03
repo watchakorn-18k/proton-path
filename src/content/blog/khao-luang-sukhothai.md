@@ -11,6 +11,7 @@ walkDuration: "3-4 ชม. ขึ้นยอด"
 name: "เขาหลวงสุโขทัย"
 nameEn: "Khao Luang Sukhothai"
 coords: [16.863378612088965, 99.67502060100429]
+cost: 1586
 ---
 
 ![เขาหลวงสุโขทัย อุทยานแห่งชาติรามคำแหง](/images/khao-luang/image-1.webp)
