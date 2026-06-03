@@ -103,14 +103,17 @@ const formatCost = (cost?: number) => (typeof cost === 'number' ? `${cost.toLoca
 						<div class="pdf-trail-list">
 							{mediumTrails.map((trail) => (
 								<article class="pdf-trail-card">
-									<div class="pdf-trail-number">NO.{String(trail.id).padStart(2, '0')}</div>
+									<div class="pdf-trail-image-wrapper">
+										<img class="pdf-trail-image" src={withBase(trail.image)} alt={trail.name} />
+										<div class="pdf-trail-number">NO.{String(trail.id).padStart(2, '0')}</div>
+									</div>
 									<div class="pdf-trail-body">
 										<div class="pdf-trail-title-row">
 											<div>
 												<h3>{trail.name}</h3>
 												<p>{trail.nameEn}</p>
 											</div>
-											<span>{trail.difficulty}</span>
+											<span class="pdf-trail-badge">{trail.difficulty}</span>
 										</div>
 										<dl class="pdf-trail-meta">
 											<div>
@@ -121,15 +124,7 @@ const formatCost = (cost?: number) => (typeof cost === 'number' ? `${cost.toLoca
 												<dt>วันที่บันทึก</dt>
 												<dd>{dateFmt.format(new Date(trail.date))}</dd>
 											</div>
-											<div>
-												<dt>เวลาเดิน</dt>
-												<dd>{trail.walkDuration ?? '-'}</dd>
-											</div>
-											<div>
-												<dt>ค่าใช้จ่าย</dt>
-												<dd>{formatCost(trail.cost)}</dd>
-											</div>
-											<div>
+																																	<div class="">
 												<dt>พิกัด</dt>
 												<dd>{formatCoords(trail.coords)}</dd>
 											</div>

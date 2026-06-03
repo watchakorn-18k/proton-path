@@ -156,23 +156,13 @@ const pointsData = JSON.stringify(points);
 			const orderedCoords = [...pointsData]
 				.sort((a, b) => a.id - b.id)
 				.map((p) => p.coords);
-			const routeLine = L.polyline(orderedCoords, {
-				color: '#ff6b6b',
-				weight: 2.5,
-				opacity: 0.95,
-				dashArray: '7 8',
-				lineCap: 'round',
-				lineJoin: 'round'
-			});
-			let routeVisible = false;
-
-			// Walking icon that moves along the route path.
-			// Walks segment-by-segment (1→2→3...→last), pauses, then snaps back to 1 and restarts.
+			// Walking dot — SVG pin that moves along the route.
+			// Each segment is a separate polyline: passed segments fade out, upcoming stays bright.
 			const walkerIcon = L.divIcon({
 				className: 'route-walker-icon',
-				html: '🥾',
-				iconSize: [22, 22],
-				iconAnchor: [11, 11]
+				html: `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" fill="#ff6b6b" stroke="#07110d" stroke-width="2.5"/><circle cx="10" cy="10" r="2.5" fill="#07110d"/></svg>`,
+				iconSize: [20, 20],
+				iconAnchor: [10, 10]
 			});
 			const walkerMarker = L.marker(orderedCoords[0], {
 				icon: walkerIcon,
@@ -181,42 +171,74 @@ const pointsData = JSON.stringify(points);
 			});
 			let walkerAnimId: number | null = null;
 
+			// Build per-segment polylines so we can fade passed ones independently.
+			const routeColor = '#ff6b6b';
+			const routeColorFaded = 'color-mix(in srgb, #ff6b6b 30%, transparent)';
+			const segmentLines: L.Polyline[] = [];
+			for (let i = 0; i < orderedCoords.length - 1; i++) {
+				segmentLines.push(L.polyline([orderedCoords[i], orderedCoords[i + 1]], {
+					color: routeColor,
+					weight: 2.5,
+					opacity: 0.95,
+					dashArray: '7 8',
+					lineCap: 'round',
+					lineJoin: 'round'
+				}));
+			}
+
+			// Per-segment polylines for fade effect.
+			let routeVisible = false;
+
 			const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 			const SEGMENT_DURATION = 6000; // ms per segment — real walking pace, no rush
 			const PAUSE_AT_END = 5000;     // ms rest at last point before heading back
 
-			function startRouteAnim() {
-				if (prefersReducedMotion || orderedCoords.length < 2) return;
-				const segCount = orderedCoords.length - 1;
-				const cycleDuration = segCount * SEGMENT_DURATION + PAUSE_AT_END;
-				const startTime = performance.now();
+		function startRouteAnim() {
+			if (prefersReducedMotion || orderedCoords.length < 2) return;
+			const segCount = orderedCoords.length - 1;
+			const cycleDuration = segCount * SEGMENT_DURATION + PAUSE_AT_END;
+			const startTime = performance.now();
+			let lastSegIndex = -1;
 
-				function step(now: number) {
-					if (!routeVisible) return;
-					const elapsed = (now - startTime) % cycleDuration;
-					if (elapsed >= segCount * SEGMENT_DURATION) {
-						// Pausing at last point — stay put.
-						walkerMarker.setLatLng(orderedCoords[orderedCoords.length - 1]);
-					} else {
-						const segIndex = Math.min(Math.floor(elapsed / SEGMENT_DURATION), segCount - 1);
-						const segT = (elapsed - segIndex * SEGMENT_DURATION) / SEGMENT_DURATION;
-						const from = orderedCoords[segIndex];
-						const to = orderedCoords[segIndex + 1];
-						const lat = from[0] + (to[0] - from[0]) * segT;
-						const lng = from[1] + (to[1] - from[1]) * segT;
-						walkerMarker.setLatLng([lat, lng]);
-					}
-					// Snap back to point 1 at the very start of each cycle.
-					const cycleElapsed = (now - startTime) % cycleDuration;
-					if (cycleElapsed < 16) {
-						walkerMarker.setLatLng(orderedCoords[0]);
-					}
-					walkerAnimId = requestAnimationFrame(step);
-				}
-				// Defer to let polyline SVG render.
-				setTimeout(() => { walkerAnimId = requestAnimationFrame(step); }, 120);
+			function resetSegmentColors() {
+				segmentLines.forEach((sl) => sl.setStyle({ color: routeColor, opacity: 0.95 }));
 			}
+
+			function step(now: number) {
+				if (!routeVisible) return;
+				const elapsed = (now - startTime) % cycleDuration;
+				if (elapsed >= segCount * SEGMENT_DURATION) {
+					walkerMarker.setLatLng(orderedCoords[orderedCoords.length - 1]);
+				} else {
+					const segIndex = Math.min(Math.floor(elapsed / SEGMENT_DURATION), segCount - 1);
+					const segT = (elapsed - segIndex * SEGMENT_DURATION) / SEGMENT_DURATION;
+					const from = orderedCoords[segIndex];
+					const to = orderedCoords[segIndex + 1];
+					const lat = from[0] + (to[0] - from[0]) * segT;
+					const lng = from[1] + (to[1] - from[1]) * segT;
+					walkerMarker.setLatLng([lat, lng]);
+
+					if (segIndex !== lastSegIndex) {
+						for (let i = 0; i < segmentLines.length; i++) {
+							segmentLines[i].setStyle({
+								color: routeColor,
+								opacity: i < segIndex ? 0.2 : 0.95
+							});
+						}
+						lastSegIndex = segIndex;
+					}
+				}
+				const cycleElapsed = (now - startTime) % cycleDuration;
+				if (cycleElapsed < 16) {
+					walkerMarker.setLatLng(orderedCoords[0]);
+					resetSegmentColors();
+					lastSegIndex = -1;
+				}
+				walkerAnimId = requestAnimationFrame(step);
+			}
+			setTimeout(() => { walkerAnimId = requestAnimationFrame(step); }, 120);
+		}
 
 			function stopRouteAnim() {
 				if (walkerAnimId) { cancelAnimationFrame(walkerAnimId); walkerAnimId = null; }
@@ -341,13 +363,13 @@ const pointsData = JSON.stringify(points);
 				routeBtn.addEventListener('click', () => {
 					routeVisible = !routeVisible;
 					if (routeVisible) {
-						routeLine.addTo(map);
+						segmentLines.forEach((sl) => sl.addTo(map));
 						walkerMarker.addTo(map);
 						startRouteAnim();
 					} else {
 						stopRouteAnim();
 						map.removeLayer(walkerMarker);
-						map.removeLayer(routeLine);
+						segmentLines.forEach((sl) => map.removeLayer(sl));
 					}
 					routeBtn.classList.toggle('active', routeVisible);
 				});

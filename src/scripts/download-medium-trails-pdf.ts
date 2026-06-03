@@ -36,7 +36,7 @@ if (downloadButton && pdfDocument) {
 					html2canvas: {
 						scale: 2,
 						useCORS: true,
-						backgroundColor: '#f7f1df'
+						backgroundColor: '#ffffff'
 					},
 					jsPDF: {
 						unit: 'mm',
