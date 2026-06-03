@@ -12,6 +12,7 @@ const blog = defineCollection({
     id: z.number(),
     location: z.string(),
     difficulty: z.string(),
+    walkDuration: z.string().optional(),
     name: z.string(),
     nameEn: z.string(),
     coords: z.tuple([z.number(), z.number()]),
