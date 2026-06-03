@@ -9,7 +9,7 @@ location: "นครสวรรค์ / กำแพงเพชร"
 difficulty: "ง่ายมาก"
 name: "อุทยานแห่งชาติแม่วงก์ ช่องเย็น"
 nameEn: "Mae Wong National Park - Chong Yen"
-coords: [15.6167, 99.5167]
+coords: [16.1004178398938, 99.10789018395893]
 ---
 
 ## เกริ่นนำ

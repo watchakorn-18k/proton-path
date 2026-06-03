@@ -51,14 +51,24 @@ const pointsData = JSON.stringify(points);
 			const firstPoint = pointsData[0];
 			const map = L.map('route-map').setView(firstPoint.coords, 9);
 
-			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 				maxZoom: 19
 			}).addTo(map);
 
+			// Esri World Imagery for the satellite toggle — shows real terrain / ridgelines.
+			const satelliteLayer = L.tileLayer(
+				'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+				{
+					attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
+					maxZoom: 19
+				}
+			);
+
 			const tooltipMarkers: L.Marker[] = [];
 			let tooltipsVisible = true;
 			let metaHidden = false;
+			let satelliteActive = false;
 
 			// Difficulty → pin border colors only. All pins share the same dark fill.
 			const pinBorderConfigs = [
@@ -153,21 +163,49 @@ const pointsData = JSON.stringify(points);
 			const svgLabelOff = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
 			const svgNameOnly = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="12" y2="15"></line></svg>';
 			const svgReset = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 21 3 21 3 15"></polyline><polyline points="15 3 21 3 21 9"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>';
+			const svgSatellite = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>';
+			const svgFsOpen = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>';
+			const svgFsClose = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"></path><path d="M21 8h-3a2 2 0 0 1-2-2V3"></path><path d="M3 16h3a2 2 0 0 1 2 2v3"></path><path d="M16 21v-3a2 2 0 0 1 2-2h3"></path></svg>';
+			const svgGear = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
 
 			const toolbar = document.createElement('div');
 			toolbar.className = 'map-toolbar';
 			toolbar.innerHTML = `
-				${initialBounds ? `<button class="map-toolbar-btn" data-action="reset-view" title="กลับมุมมองรวม">${svgReset}<span>มุมรวม</span></button>` : ''}
-				<button class="map-toolbar-btn" data-action="toggle-meta" title="แสดงเฉพาะชื่อทริป">
-					${svgNameOnly}
-					<span>เฉพาะชื่อ</span>
+				<button class="map-toolbar-trigger" data-action="toggle-menu" title="เครื่องมือแผนที่" aria-expanded="false">
+					${svgGear}
+					<span>เครื่องมือ</span>
 				</button>
-				<button class="map-toolbar-btn active" data-action="toggle-tooltips" title="เปิด/ปิดข้อความบนแผนที่">
-					${svgLabelOn}
-					<span>ป้ายชื่อ</span>
-				</button>
+				<div class="map-toolbar-menu">
+					<button class="map-toolbar-btn" data-action="toggle-fullscreen" title="ดูแบบเต็มจอ">${svgFsOpen}<span>เต็มจอ</span></button>
+					<button class="map-toolbar-btn" data-action="toggle-satellite" title="สลับภาพถ่ายดาวเทียม">${svgSatellite}<span>ดาวเทียม</span></button>
+					${initialBounds ? `<button class="map-toolbar-btn" data-action="reset-view" title="กลับมุมมองรวม">${svgReset}<span>มุมรวม</span></button>` : ''}
+					<button class="map-toolbar-btn" data-action="toggle-meta" title="แสดงเฉพาะชื่อทริป">
+						${svgNameOnly}
+						<span>เฉพาะชื่อ</span>
+					</button>
+					<button class="map-toolbar-btn active" data-action="toggle-tooltips" title="เปิด/ปิดข้อความบนแผนที่">
+						${svgLabelOn}
+						<span>ป้ายชื่อ</span>
+					</button>
+				</div>
 			`;
 			mapEl.parentElement?.appendChild(toolbar);
+
+			// Dropdown open/close
+			const triggerBtn = toolbar.querySelector('[data-action="toggle-menu"]');
+			if (triggerBtn) {
+				triggerBtn.addEventListener('click', (e) => {
+					e.stopPropagation();
+					const open = toolbar.classList.toggle('open');
+					triggerBtn.setAttribute('aria-expanded', String(open));
+				});
+				document.addEventListener('click', (e) => {
+					if (!toolbar.contains(e.target as Node)) {
+						toolbar.classList.remove('open');
+						triggerBtn.setAttribute('aria-expanded', 'false');
+					}
+				});
+			}
 
 			const toggleBtn = toolbar.querySelector('[data-action="toggle-tooltips"]');
 			if (toggleBtn) {
@@ -206,6 +244,44 @@ const pointsData = JSON.stringify(points);
 			if (resetBtn && initialBounds) {
 				resetBtn.addEventListener('click', () => {
 					map.flyToBounds(initialBounds, { padding: [50, 50], duration: 0.8 });
+				});
+			}
+
+			// Toggle satellite imagery.
+			const satBtn = toolbar.querySelector('[data-action="toggle-satellite"]');
+			if (satBtn) {
+				satBtn.addEventListener('click', () => {
+					satelliteActive = !satelliteActive;
+					if (satelliteActive) {
+						map.removeLayer(streetLayer);
+						satelliteLayer.addTo(map);
+					} else {
+						map.removeLayer(satelliteLayer);
+						streetLayer.addTo(map);
+					}
+					mapEl.parentElement?.classList.toggle('map-satellite', satelliteActive);
+					satBtn.classList.toggle('active', satelliteActive);
+				});
+			}
+
+			// Toggle fullscreen on the map container.
+			const fsBtn = toolbar.querySelector('[data-action="toggle-fullscreen"]');
+			const container = mapEl.parentElement;
+			if (fsBtn && container) {
+				fsBtn.addEventListener('click', () => {
+					if (!document.fullscreenElement) {
+						container.requestFullscreen?.();
+					} else {
+						document.exitFullscreen?.();
+					}
+				});
+				document.addEventListener('fullscreenchange', () => {
+					const active = document.fullscreenElement === container;
+					fsBtn.classList.toggle('active', active);
+					const svgEl = fsBtn.querySelector('svg');
+					if (svgEl) svgEl.outerHTML = active ? svgFsClose : svgFsOpen;
+					// Leaflet needs a resize nudge after the box changes size.
+					setTimeout(() => map.invalidateSize(), 120);
 				});
 			}
 
@@ -253,6 +329,14 @@ const pointsData = JSON.stringify(points);
 		overflow: hidden;
 	}
 
+	/* Fullscreen: fill the screen, drop the rounded frame */
+	.route-map-container:fullscreen {
+		width: 100%;
+		height: 100%;
+		border: none;
+		border-radius: 0;
+	}
+
 	@media (min-width: 640px) {
 		.route-map-container {
 			height: min(72vh, 36rem);
@@ -270,16 +354,19 @@ const pointsData = JSON.stringify(points);
 		height: 100%;
 	}
 
-	/* Map Toolbar */
+	/* Map Toolbar — dropdown */
 	:global(.map-toolbar) {
 		position: absolute;
 		bottom: 28px;
 		right: 10px;
 		z-index: 1000;
 		display: flex;
+		flex-direction: column-reverse;
+		align-items: flex-end;
 		gap: 6px;
 	}
 
+	:global(.map-toolbar-trigger),
 	:global(.map-toolbar-btn) {
 		display: flex;
 		align-items: center;
@@ -296,17 +383,29 @@ const pointsData = JSON.stringify(points);
 		backdrop-filter: blur(8px);
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 		transition: all 0.2s ease;
+		white-space: nowrap;
 	}
 
+	:global(.map-toolbar-trigger svg),
 	:global(.map-toolbar-btn svg) {
 		stroke: var(--muted);
 		transition: stroke 0.2s ease;
 	}
 
+	:global(.map-toolbar-trigger:hover),
 	:global(.map-toolbar-btn:hover) {
 		border-color: color-mix(in srgb, var(--moss) 50%, transparent);
 		color: var(--bone);
 		background: rgb(13 26 19 / 0.95);
+	}
+
+	:global(.map-toolbar.open .map-toolbar-trigger) {
+		border-color: var(--moss);
+		color: var(--moss);
+	}
+
+	:global(.map-toolbar.open .map-toolbar-trigger svg) {
+		stroke: var(--moss);
 	}
 
 	:global(.map-toolbar-btn.active) {
@@ -317,6 +416,26 @@ const pointsData = JSON.stringify(points);
 
 	:global(.map-toolbar-btn.active svg) {
 		stroke: var(--moss);
+	}
+
+	/* Collapsed menu: hidden until .open */
+	:global(.map-toolbar-menu) {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 6px;
+		opacity: 0;
+		visibility: hidden;
+		transform: translateY(6px);
+		transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+		pointer-events: none;
+	}
+
+	:global(.map-toolbar.open .map-toolbar-menu) {
+		opacity: 1;
+		visibility: visible;
+		transform: translateY(0);
+		pointer-events: auto;
 	}
 
 	/* Difficulty legend (bottom-left) */

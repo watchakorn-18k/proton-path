@@ -1021,6 +1021,37 @@ p {
   letter-spacing: 0.04em;
 }
 
+.map-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 0.65rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--moss) 45%, transparent);
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--moss) 10%, transparent);
+  color: var(--moss);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.map-cta svg {
+  flex-shrink: 0;
+}
+
+.map-cta:hover {
+  background: color-mix(in srgb, var(--moss) 18%, transparent);
+  border-color: color-mix(in srgb, var(--moss) 70%, transparent);
+  transform: translateY(-2px);
+}
+
+.map-cta:active {
+  transform: translateY(0);
+}
+
 .blog-content {
   max-width: 54rem;
   margin: 0 auto;
