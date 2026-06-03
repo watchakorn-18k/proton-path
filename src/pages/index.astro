@@ -4,9 +4,9 @@ import RouteMap from '../components/RouteMap.astro';
 import ThemeSwitcher from '../components/ThemeSwitcher.astro';
 import { getCollection } from 'astro:content';
 
-// Prefix internal absolute paths with the deploy base (/proton-path/)
-const base = import.meta.env.BASE_URL;
-const withBase = (p: string) => `${base}${p.replace(/^\//, '')}`;
+// Prefix internal absolute paths with the deploy base (/proton-path)
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const withBase = (p: string) => `${base}${p.startsWith('/') ? p : `/${p}`}`;
 
 const trailPosts = (await getCollection('blog'))
 	.map((post) => ({
@@ -126,11 +126,12 @@ const fieldNotes = [
 		</header>
 
 		<main id="content">
-			<section class="hero-section">
+			<section class="hero-section" data-hero>
 				<img
 					src={withBase('/images/trail-hero.webp')}
 					alt="เส้นทางภูเขาในป่าหมอกภาคตะวันตกของไทย"
 					class="hero-image"
+					data-hero-image
 				/>
 				<div class="hero-shade"></div>
 
@@ -362,6 +363,7 @@ const fieldNotes = [
 			import '../scripts/theme-switcher.ts';
 				import '../scripts/journal-hover.ts';
 				import '../scripts/pagination.ts';
+				import '../scripts/hero-parallax.ts';
 		</script>
 	</body>
 </html>

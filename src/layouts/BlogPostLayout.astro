@@ -5,9 +5,9 @@ import ThemeSwitcher from '../components/ThemeSwitcher.astro';
 const { frontmatter } = Astro.props;
 const { title, description, date, tags, image } = frontmatter;
 
-// Prefix internal absolute paths with the deploy base (/proton-path/)
-const base = import.meta.env.BASE_URL;
-const withBase = (p: string) => `${base}${p.replace(/^\//, '')}`;
+// Prefix internal absolute paths with the deploy base (/proton-path)
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const withBase = (p: string) => `${base}${p.startsWith('/') ? p : `/${p}`}`;
 const heroImage = image ? withBase(image) : undefined;
 
 const dateFmt = new Intl.DateTimeFormat('th-TH', {

@@ -10,7 +10,7 @@ if (journal) {
 	const meta = journal.querySelector<HTMLElement>('[data-journal-meta]');
 	const title = journal.querySelector<HTMLElement>('[data-journal-title]');
 	const triggers = [...journal.querySelectorAll<HTMLAnchorElement>('[data-journal-trigger]')];
-	const fallbackImage = `${import.meta.env.BASE_URL}images/route-texture.webp`;
+	const fallbackImage = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/images/route-texture.webp`;
 	const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 	let activeUrl = feature?.href ?? '';

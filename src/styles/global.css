@@ -246,6 +246,7 @@ p {
 .hero-image {
   z-index: -3;
   object-fit: cover;
+  will-change: transform;
 }
 
 .hero-shade {
