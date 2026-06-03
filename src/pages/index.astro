@@ -2,7 +2,23 @@
 import '../styles/global.css';
 import RouteMap from '../components/RouteMap.astro';
 import ThemeSwitcher from '../components/ThemeSwitcher.astro';
-import { trailPoints, trailPosts } from '../data/trails';
+import { getCollection } from 'astro:content';
+
+const trailPosts = (await getCollection('blog'))
+	.map((post) => ({
+		slug: post.id,
+		...post.data,
+	}))
+	.sort((a, b) => a.id - b.id);
+
+const trailPoints = trailPosts.map((post) => ({
+	id: post.id,
+	name: post.name,
+	nameEn: post.nameEn,
+	coords: post.coords,
+	date: post.date,
+	blogUrl: `/blog/${post.slug}/`,
+}));
 
 const youtubeUrl = 'https://www.youtube.com/@proton-path';
 const blogUrl = '/blog/';
@@ -224,7 +240,7 @@ const fieldNotes = [
 					)}
 
 					<div class="journal-stack">
-						{sortedTrailPosts.map((post) => (
+						{sortedTrailPosts.map((post, index) => (
 							<a
 								href={`/blog/${post.slug}/`}
 								class="journal-row"
@@ -234,6 +250,7 @@ const fieldNotes = [
 								data-url={`/blog/${post.slug}/`}
 								data-number={String(post.id).padStart(2, '0')}
 								data-meta={`${post.location} · ${post.difficulty}`}
+								data-page={Math.floor(index / 4) + 1}
 							>
 								<span class="journal-number">{String(post.id).padStart(2, '0')}</span>
 								<div>
@@ -243,6 +260,17 @@ const fieldNotes = [
 							</a>
 						))}
 					</div>
+					{sortedTrailPosts.length > 4 && (
+						<nav class="content-pagination" aria-label="Trail journal pagination" data-pagination="journal">
+							<button type="button" data-page-prev>ก่อนหน้า</button>
+							<div>
+								{Array.from({ length: Math.ceil(sortedTrailPosts.length / 4) }, (_, index) => (
+									<button type="button" data-page-button={index + 1}>{index + 1}</button>
+								))}
+							</div>
+							<button type="button" data-page-next>ถัดไป</button>
+						</nav>
+					)}
 				</div>
 			</section>
 
@@ -268,11 +296,22 @@ const fieldNotes = [
 								</div>
 							))}
 						</div>
-						<ul class="trail-list">
-							{routeHighlights.map((highlight) => (
-								<li>{highlight}</li>
+						<ul class="trail-list" data-paginated-list="route">
+							{routeHighlights.map((highlight, index) => (
+								<li data-page={Math.floor(index / 4) + 1}>{highlight}</li>
 							))}
 						</ul>
+						{routeHighlights.length > 4 && (
+							<nav class="content-pagination route-pagination" aria-label="Route list pagination" data-pagination="route">
+								<button type="button" data-page-prev>ก่อนหน้า</button>
+								<div>
+									{Array.from({ length: Math.ceil(routeHighlights.length / 4) }, (_, index) => (
+										<button type="button" data-page-button={index + 1}>{index + 1}</button>
+									))}
+								</div>
+								<button type="button" data-page-next>ถัดไป</button>
+							</nav>
+						)}
 					</article>
 				</div>
 

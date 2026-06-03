@@ -1,10 +1,15 @@
 ---
 import '../../styles/global.css';
 import ThemeSwitcher from '../../components/ThemeSwitcher.astro';
-import { trailPosts } from '../../data/trails';
+import { getCollection } from 'astro:content';
 
 const youtubeUrl = 'https://www.youtube.com/@proton-path';
-const posts = trailPosts;
+const posts = (await getCollection('blog'))
+	.map((post) => ({
+		slug: post.id,
+		...post.data,
+	}))
+	.sort((a, b) => a.id - b.id);
 
 const dateFmt = new Intl.DateTimeFormat('th-TH', {
 	day: 'numeric',

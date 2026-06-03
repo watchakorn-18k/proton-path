@@ -1,10 +1,15 @@
 ---
-layout: ../../layouts/BlogPostLayout.astro
-title: "เที่ยวเดินป่า | น้ำตกโกรกอีดก จังหวัดสระบุรี"
-description: "บันทึกการเดินทางลุยน้ำตกโกรกอีดก เส้นทางเดินป่าหน้าฝนที่เต็มไปด้วยความลื่น ชัน และน้ำตกสวยงาม 7 ชั้น"
-date: "2026-06-04"
+title: เที่ยวเดินป่า | น้ำตกโกรกอีดก จังหวัดสระบุรี
+description: บันทึกการเดินทางลุยน้ำตกโกรกอีดก เส้นทางเดินป่าหน้าฝนที่เต็มไปด้วยความลื่น ชัน และน้ำตกสวยงาม 7 ชั้น
+date: 2026-06-04
 tags: ["hiking", "saraburi"]
-image: "/images/krok-e-dok/cover.webp"
+image: /images/krok-e-dok/cover.webp
+id: 3
+location: "แก่งคอย สระบุรี"
+difficulty: "ชันและลื่น"
+name: "น้ำตกโกรกอีดก"
+nameEn: "Krok E-Dok Waterfall"
+coords: [14.4531, 101.2152]
 ---
 
 ![น้ำตกโกรกอีดก](/images/krok-e-dok/image-1.webp)

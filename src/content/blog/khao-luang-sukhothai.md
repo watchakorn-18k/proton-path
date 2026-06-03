@@ -1,10 +1,15 @@
 ---
-layout: ../../layouts/BlogPostLayout.astro
-title: "เที่ยวเดินป่า | เขาหลวงสุโขทัย อุทยานแห่งชาติรามคำแหง"
-description: "บันทึกการเดินป่าเขาหลวงสุโขทัย เส้นทางสั้นแต่ชันมากถึง 70-80% ท้าทายขาและเข่าตลอดเส้นทาง 3.7 กิโลเมตร"
-date: "2026-06-03"
+title: เที่ยวเดินป่า | เขาหลวงสุโขทัย อุทยานแห่งชาติรามคำแหง
+description: บันทึกการเดินป่าเขาหลวงสุโขทัย เส้นทางสั้นแต่ชันมากถึง 70-80% ท้าทายขาและเข่าตลอดเส้นทาง 3.7 กิโลเมตร
+date: 2026-06-03
 tags: ["hiking", "sukhothai"]
-image: "/images/khao-luang/cover.webp"
+image: /images/khao-luang/cover.webp
+id: 2
+location: "สุโขทัย"
+difficulty: "ชันมาก"
+name: "เขาหลวงสุโขทัย"
+nameEn: "Khao Luang Sukhothai"
+coords: [16.863378612088965, 99.67502060100429]
 ---
 
 ![เขาหลวงสุโขทัย อุทยานแห่งชาติรามคำแหง](/images/khao-luang/image-1.webp)

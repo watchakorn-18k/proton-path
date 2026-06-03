@@ -1,10 +1,15 @@
 ---
-layout: ../../layouts/BlogPostLayout.astro
-title: "เที่ยวเดินป่า | อุทยานแห่งชาติน้ำตกเอรวัณ จังหวัดกาญจนบุรี"
-description: "จุดแวะพักระหว่างทางก่อนขึ้นสันหนอกวัว เส้นทางเดินง่ายแต่ร้อน เหมาะกับคนไปเล่นน้ำและถ่ายรูป"
-date: "2026-05-20"
+title: เที่ยวเดินป่า | อุทยานแห่งชาติน้ำตกเอรวัณ จังหวัดกาญจนบุรี
+description: จุดแวะพักระหว่างทางก่อนขึ้นสันหนอกวัว เส้นทางเดินง่ายแต่ร้อน เหมาะกับคนไปเล่นน้ำและถ่ายรูป
+date: 2025-10-11
 tags: ["hiking", "kanchanaburi", "waterfall"]
-image: "/images/erawan/cover.webp"
+image: /images/erawan/cover.webp
+id: 7
+location: "กาญจนบุรี"
+difficulty: "ง่าย ร้อน"
+name: "อุทยานแห่งชาติน้ำตกเอรวัณ"
+nameEn: "Erawan National Park"
+coords: [14.358938641390635, 99.14044130743585]
 ---
 
 ![น้ำตกเอรวัณ อุทยานแห่งชาติน้ำตกเอรวัณ](/images/erawan/cover.webp)
