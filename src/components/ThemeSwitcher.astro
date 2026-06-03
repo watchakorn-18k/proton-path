@@ -1,0 +1,52 @@
+---
+// Theme Switcher Component
+---
+
+<div class="theme-switcher">
+	<button type="button" class="theme-toggle" aria-label="เปลี่ยนธีม" aria-expanded="false">
+		<span class="theme-icon" aria-hidden="true">
+			<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<circle cx="10" cy="10" r="4"/>
+				<path d="M10 1v2m0 14v2M19 10h-2M3 10H1m15.07-6.93l-1.41 1.41M6.34 14.66l-1.41 1.41m12.14 0l-1.41-1.41M6.34 5.34L4.93 3.93"/>
+			</svg>
+		</span>
+	</button>
+
+	<div class="theme-menu" data-open="false" role="menu">
+		<button type="button" data-theme-value="system" role="menuitem">
+			<span class="theme-icon" aria-hidden="true">
+				<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<rect x="2" y="3" width="16" height="11" rx="2"/>
+					<path d="M7 17h6"/>
+					<path d="M10 14v3"/>
+				</svg>
+			</span>
+			System
+		</button>
+		<button type="button" data-theme-value="dark" role="menuitem">
+			<span class="theme-icon" aria-hidden="true">
+				<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M17 10.5A7.5 7.5 0 1 1 9.5 3a7.5 7.5 0 0 0 0 15 7.5 7.5 0 0 0 7.5-7.5z"/>
+				</svg>
+			</span>
+			Dark
+		</button>
+		<button type="button" data-theme-value="oled-dark" role="menuitem">
+			<span class="theme-icon" aria-hidden="true">
+				<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" stroke="none">
+					<circle cx="10" cy="10" r="8"/>
+				</svg>
+			</span>
+			OLED Dark
+		</button>
+		<button type="button" data-theme-value="light" role="menuitem">
+			<span class="theme-icon" aria-hidden="true">
+				<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="10" cy="10" r="4"/>
+					<path d="M10 1v2m0 14v2M19 10h-2M3 10H1m15.07-6.93l-1.41 1.41M6.34 14.66l-1.41 1.41m12.14 0l-1.41-1.41M6.34 5.34L4.93 3.93"/>
+				</svg>
+			</span>
+			Light
+		</button>
+	</div>
+</div>

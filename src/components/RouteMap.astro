@@ -1,0 +1,158 @@
+---
+// Dynamic route map component - supports multiple trail points
+export interface TrailPoint {
+	id: number;
+	name: string;
+	nameEn: string;
+	coords: [number, number];
+	blogUrl: string;
+}
+
+interface Props {
+	points?: TrailPoint[];
+}
+
+const { points = [] } = Astro.props;
+
+// Serialize data for client-side script
+const pointsData = JSON.stringify(points);
+---
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="route-map-container">
+	<div id="route-map" class="route-map" data-points={pointsData}></div>
+</div>
+
+<script>
+	import L from 'leaflet';
+
+	function initMap() {
+		try {
+			const mapEl = document.getElementById('route-map');
+			if (!mapEl) return;
+
+			const pointsData = JSON.parse(mapEl.dataset.points || '[]');
+			if (pointsData.length === 0) return;
+
+			// Center on first point or calculate bounds
+			const firstPoint = pointsData[0];
+			const map = L.map('route-map').setView(firstPoint.coords, 9);
+
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+				maxZoom: 19
+			}).addTo(map);
+
+			// Create markers for each point
+			pointsData.forEach((point) => {
+				const customIcon = L.divIcon({
+					className: 'custom-pin',
+					html: `<div class="pin-inner" data-number="${point.id}"></div>`,
+					iconSize: [36, 36],
+					iconAnchor: [18, 36]
+				});
+
+				const popupContent = `
+					<div style="min-width: 180px;">
+						<b>${point.name}</b><br>
+						<small style="color: rgba(237, 231, 213, 0.7);">${point.nameEn} • ป่าที่ ${point.id}</small><br>
+						<a href="${point.blogUrl}" style="color: #a8b879; text-decoration: none; font-weight: 600; font-size: 0.9rem; display: inline-block; margin-top: 0.5rem;">
+							อ่านเพิ่มเติม →
+						</a>
+					</div>
+				`;
+
+				L.marker(point.coords, { icon: customIcon })
+					.addTo(map)
+					.bindPopup(popupContent);
+			});
+
+			// Fit bounds if multiple points
+			if (pointsData.length > 1) {
+				const bounds = L.latLngBounds(pointsData.map(p => p.coords));
+				map.fitBounds(bounds, { padding: [50, 50] });
+			}
+
+		} catch (error) {
+			console.error('Map init error:', error);
+		}
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initMap);
+	} else {
+		setTimeout(initMap, 100);
+	}
+</script>
+
+<style>
+	.route-map-container {
+		position: relative;
+		width: 100%;
+		height: min(70vh, 32rem);
+		border: 1px solid var(--line);
+		border-radius: 0.5rem;
+		background: rgb(13 26 19 / 0.76);
+		backdrop-filter: blur(18px);
+		overflow: hidden;
+	}
+
+	.route-map {
+		width: 100%;
+		height: 100%;
+	}
+
+	:global(.leaflet-container) {
+		font-family: var(--font-body);
+	}
+
+	:global(.leaflet-popup-content-wrapper) {
+		background: rgb(13 26 19 / 0.95) !important;
+		color: var(--bone) !important;
+		border: 1px solid var(--line) !important;
+		border-radius: 0.375rem !important;
+	}
+
+	:global(.leaflet-popup-content) {
+		margin: 0.75rem !important;
+	}
+
+	/* Custom pin styling - dynamic numbers */
+	:global(.custom-pin) {
+		background: transparent !important;
+		border: none !important;
+	}
+
+	:global(.pin-inner) {
+		position: relative;
+		width: 36px;
+		height: 36px;
+		background: var(--moss);
+		border: 3px solid white;
+		border-radius: 50% 50% 50% 0;
+		transform: rotate(-45deg);
+		box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 800;
+		font-size: 1.1rem;
+		color: white;
+		font-family: var(--font-heading);
+		cursor: pointer;
+		transition: transform 0.2s ease;
+	}
+
+	/* Dynamic number from data attribute */
+	:global(.pin-inner::after) {
+		content: attr(data-number);
+		transform: rotate(45deg);
+		display: block;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+	}
+
+	:global(.custom-pin:hover .pin-inner) {
+		transform: rotate(-45deg) scale(1.1);
+	}
+</style>

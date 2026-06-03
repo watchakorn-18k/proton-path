@@ -1,0 +1,91 @@
+---
+import '../styles/global.css';
+import ThemeSwitcher from '../components/ThemeSwitcher.astro';
+
+const { frontmatter } = Astro.props;
+const { title, description, date, tags, image } = frontmatter;
+
+const dateFmt = new Intl.DateTimeFormat('th-TH', {
+	day: 'numeric',
+	month: 'long',
+	year: 'numeric'
+});
+const formattedDate = date ? dateFmt.format(new Date(date)) : '';
+---
+
+<html lang="th">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description || title} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description || title} />
+		{image && <meta property="og:image" content={image} />}
+		<title>{title} - Proton Path</title>
+	</head>
+	<body>
+		<a class="skip-link" href="#content">ข้ามไปยังเนื้อหา</a>
+
+		<header class="site-nav">
+			<a class="brand-mark" href="/" aria-label="Proton Path home">
+				<span>Proton</span>
+				<span>◄ Path</span>
+			</a>
+			<nav aria-label="Primary navigation">
+				<a href="/#video">คลิปล่าสุด</a>
+				<a href="/#route">เส้นทาง</a>
+				<a href="/#about">เกี่ยวกับ</a>
+				<a href="/blog/">บล็อก</a>
+			</nav>
+			<ThemeSwitcher />
+		</header>
+
+		<main id="content" class="blog-shell">
+			{image && (
+				<div class="blog-hero">
+					<img src={image} alt={title} />
+					<div class="blog-hero-shade"></div>
+				</div>
+			)}
+
+			<article class="blog-article">
+				<header class="blog-header">
+					<a href="/blog/" class="blog-back">← กลับหน้าบล็อก</a>
+					<h1>{title}</h1>
+					<div class="blog-meta">
+						{formattedDate && <time datetime={date}>{formattedDate}</time>}
+						{tags && tags.length > 0 && (
+							<div class="blog-tags">
+								{tags.map((tag: string) => (
+									<span class="blog-tag">{tag}</span>
+								))}
+							</div>
+						)}
+					</div>
+				</header>
+
+				<div class="blog-content">
+					<slot />
+				</div>
+			</article>
+		</main>
+
+		<footer class="site-footer">
+			<div>
+				<strong>Proton Path</strong>
+				<span>Thai trekking notes</span>
+			</div>
+			<nav aria-label="Footer navigation">
+				<a href="/">หน้าแรก</a>
+				<a href="/blog/">บล็อก</a>
+			</nav>
+			<p>© 2026 Proton Path. All rights reserved.</p>
+		</footer>
+
+		<script>
+			import '../scripts/theme-switcher.ts';
+		</script>
+	</body>
+</html>

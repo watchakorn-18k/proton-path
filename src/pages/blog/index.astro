@@ -1,0 +1,93 @@
+---
+import '../../styles/global.css';
+import ThemeSwitcher from '../../components/ThemeSwitcher.astro';
+import { trailPosts } from '../../data/trails';
+
+const youtubeUrl = 'https://www.youtube.com/@proton-path';
+const posts = trailPosts;
+
+const dateFmt = new Intl.DateTimeFormat('th-TH', {
+	day: 'numeric',
+	month: 'short',
+	year: 'numeric'
+});
+---
+
+<html lang="th">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content="บันทึกเส้นทางเดินป่า trekking และ outdoor ในประเทศไทย" />
+		<meta property="og:title" content="บล็อก - Proton Path" />
+		<meta property="og:description" content="บันทึกเส้นทางเดินป่า trekking และ outdoor ในประเทศไทย" />
+		<title>บล็อก - Proton Path</title>
+	</head>
+	<body>
+		<a class="skip-link" href="#content">ข้ามไปยังเนื้อหา</a>
+
+		<header class="site-nav">
+			<a class="brand-mark" href="/" aria-label="Proton Path home">
+				<span>Proton</span>
+				<span>◄ Path</span>
+			</a>
+			<nav aria-label="Primary navigation">
+				<a href="/#video">คลิปล่าสุด</a>
+				<a href="/#route">เส้นทาง</a>
+				<a href="/#about">เกี่ยวกับ</a>
+				<a href={youtubeUrl} target="_blank" rel="noopener noreferrer">YouTube</a>
+			</nav>
+			<ThemeSwitcher />
+		</header>
+
+		<main id="content" class="blog-index">
+			<div class="blog-index-header">
+				<p class="section-kicker">Thai trekking archive</p>
+				<h1>บันทึกเส้นทาง</h1>
+				<p class="blog-index-lede">
+					เรื่องเล่าจากป่า เส้นทาง และการเดินทางที่บันทึกไว้เพื่อให้ผู้ที่สนใจได้อ่านและเตรียมตัว
+				</p>
+			</div>
+
+			<div class="blog-grid">
+				{posts.map((post) => (
+					<a href={`/blog/${post.slug}/`} class="blog-card">
+						<img src={post.image} alt={post.title} />
+						<div class="blog-card-content">
+							<div class="blog-card-meta">
+								<time datetime={post.date}>
+									{dateFmt.format(new Date(post.date))}
+								</time>
+								<div class="blog-card-tags">
+									{post.tags.map((tag) => (
+										<span>{tag}</span>
+									))}
+								</div>
+							</div>
+							<p class="trail-number">NO.{post.id}</p>
+							<h2>{post.title}</h2>
+							<p>{post.description}</p>
+						</div>
+					</a>
+				))}
+			</div>
+		</main>
+
+		<footer class="site-footer">
+			<div>
+				<strong>Proton Path</strong>
+				<span>Thai trekking notes</span>
+			</div>
+			<nav aria-label="Footer navigation">
+				<a href="/">หน้าแรก</a>
+				<a href={youtubeUrl} target="_blank" rel="noopener noreferrer">YouTube</a>
+			</nav>
+			<p>© 2026 Proton Path. All rights reserved.</p>
+		</footer>
+
+		<script>
+			import '../../scripts/theme-switcher.ts';
+		</script>
+	</body>
+</html>

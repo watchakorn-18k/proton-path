@@ -1,0 +1,326 @@
+---
+import '../styles/global.css';
+import RouteMap from '../components/RouteMap.astro';
+import ThemeSwitcher from '../components/ThemeSwitcher.astro';
+import { trailPoints, trailPosts } from '../data/trails';
+
+const youtubeUrl = 'https://www.youtube.com/@proton-path';
+const blogUrl = '/blog/';
+
+const channelId = 'UCrXDJRi5HCbT9sMJr20vZNA';
+
+type LatestVideo = {
+	id: string;
+	title: string;
+	url: string;
+	thumbnail: string;
+	published: string;
+};
+
+async function fetchLatestVideos(limit = 3): Promise<LatestVideo[]> {
+	try {
+		const res = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`);
+		if (!res.ok) return [];
+		const xml = await res.text();
+		const entries = xml.match(/<entry>[\s\S]*?<\/entry>/g) ?? [];
+		return entries.slice(0, limit).map((entry) => {
+			const id = entry.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1] ?? '';
+			const title = entry.match(/<title>([^<]+)<\/title>/)?.[1] ?? '';
+			const published = entry.match(/<published>([^<]+)<\/published>/)?.[1] ?? '';
+			return {
+				id,
+				title,
+				url: `https://www.youtube.com/watch?v=${id}`,
+				thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+				published
+			};
+		});
+	} catch {
+		return [];
+	}
+}
+
+const latestVideos = await fetchLatestVideos(3);
+const [featuredVideo, ...moreVideos] = latestVideos;
+
+const dateFmt = new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+const formatDate = (iso: string) => (iso ? dateFmt.format(new Date(iso)) : '');
+
+const sortedTrailPosts = [...trailPosts].sort((a, b) => Number(new Date(b.date)) - Number(new Date(a.date)));
+const latestTrailPost = sortedTrailPosts[0];
+const otherTrailPosts = sortedTrailPosts.slice(1);
+const locations = [...new Set(trailPosts.map((post) => post.location))];
+const difficulties = [...new Set(trailPosts.map((post) => post.difficulty))];
+const routeStats = [
+	{ label: 'บันทึกทั้งหมด', value: `${trailPosts.length} ทริป` },
+	{ label: 'พื้นที่', value: locations.join(' / ') },
+	{ label: 'พิกัดบนแผนที่', value: `${trailPoints.length} จุด` },
+	{ label: 'บทความล่าสุด', value: latestTrailPost ? formatDate(latestTrailPost.date) : '-' },
+	{ label: 'ระดับเส้นทาง', value: difficulties.join(' / ') },
+	{ label: 'คลังบันทึก', value: 'กำลังขยาย' }
+];
+
+const routeHighlights = trailPosts.map((post) => `${post.name} — ${post.location} · ${post.difficulty}`);
+
+const fieldNotes = [
+	'รักป่า ไม่ใช่แค่มาเดิน แต่คือการดูแลให้ป่ายังอยู่',
+	'แบกอะไรเข้ามา เก็บกลับให้หมด ทิ้งไว้แค่รอยเท้า',
+	'เดินให้เบา ถ่ายให้จริง เคารพพื้นที่ที่ให้เราผ่าน'
+];
+---
+
+<html lang="th">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content="Proton Path - บันทึกเส้นทางเดินป่า trekking และ outdoor ในประเทศไทย" />
+		<meta property="og:title" content="Proton Path - บันทึกเส้นทางเดินป่า" />
+		<meta property="og:description" content="ช่อง YouTube สายเดินป่า trekking และ outdoor ในประเทศไทย" />
+		<meta property="og:image" content="/images/trail-hero.webp" />
+		<title>Proton Path - บันทึกเส้นทางเดินป่า</title>
+	</head>
+	<body>
+		<a class="skip-link" href="#content">ข้ามไปยังเนื้อหา</a>
+
+		<header class="site-nav">
+			<a class="brand-mark" href="#content" aria-label="Proton Path home">
+				<span>Proton</span>
+				<span>◄ Path</span>
+			</a>
+			<nav aria-label="Primary navigation">
+				<a href="#video">คลิปล่าสุด</a>
+				<a href="#route">เส้นทาง</a>
+				<a href="#about">เกี่ยวกับ</a>
+				<a href="/blog/">บล็อก</a>
+				<a href={youtubeUrl} target="_blank" rel="noopener noreferrer">YouTube</a>
+			</nav>
+			<ThemeSwitcher />
+		</header>
+
+		<main id="content">
+			<section class="hero-section">
+				<img
+					src="/images/trail-hero.webp"
+					alt="เส้นทางภูเขาในป่าหมอกภาคตะวันตกของไทย"
+					class="hero-image"
+				/>
+				<div class="hero-shade"></div>
+
+				<div class="hero-grid">
+					<div class="hero-copy reveal">
+						<p class="section-kicker">Thai trekking archive</p>
+						<h1>เดินเข้าป่า<br />ให้ทางเล่าเรื่อง</h1>
+						<p class="hero-lede">
+							Proton Path บันทึกเส้นทางเดินป่า น้ำตก และแคมป์กลางป่าจากมุมคนออกเดินจริง
+						</p>
+						<div class="cta-row">
+							<a class="primary-cta" href={youtubeUrl} target="_blank" rel="noopener noreferrer">
+								ดูช่อง YouTube
+							</a>
+							<a class="text-cta" href={blogUrl}>
+								อ่านบันทึกทั้งหมด
+							</a>
+						</div>
+					</div>
+
+					<aside class="route-dossier reveal delay-one" aria-label="Trail archive summary">
+						<div class="dossier-head">
+							<span>Trail archive</span>
+							<strong>{trailPosts.length} routes</strong>
+						</div>
+						<div class="dossier-posts">
+							{trailPosts.map((post) => (
+								<a href={`/blog/${post.slug}/`} class="dossier-post">
+									<span class="dossier-post-index">{String(post.id).padStart(2, '0')}</span>
+									<div>
+										<strong>{post.name}</strong>
+										<small>{post.location} · {post.difficulty}</small>
+									</div>
+								</a>
+							))}
+						</div>
+						<div class="dossier-grid">
+							{routeStats.slice(0, 4).map((stat) => (
+								<div>
+									<span>{stat.label}</span>
+									<strong>{stat.value}</strong>
+								</div>
+							))}
+						</div>
+					</aside>
+				</div>
+			</section>
+
+			<section id="video" class="section-wrap featured-video">
+				<div class="section-heading reveal">
+					<p class="section-kicker">Latest field cut</p>
+					<h2>คลิปล่าสุดที่พาคนดูเข้าเส้นทางจริง</h2>
+				</div>
+
+				<div class="video-layout reveal delay-one">
+					<a
+						class="video-tile"
+						href={featuredVideo?.url ?? youtubeUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<img
+							src={featuredVideo?.thumbnail ?? '/images/route-texture.webp'}
+							alt={featuredVideo?.title ?? 'พื้นทางเดินป่าเปียก มีหิน มอส และใบไม้'}
+						/>
+						<div class="video-caption">
+							<span>Watch on YouTube</span>
+							<strong>{featuredVideo?.title ?? 'เดินป่าเปรโต๊ะลอซู'}</strong>
+						</div>
+					</a>
+
+					<aside class="channel-card">
+						<p>
+							วิดีโอเน้นสภาพเส้นทางจริง ระดับความเหนื่อย จุดพัก และสิ่งที่ควรรู้ก่อนออกเดิน
+						</p>
+						<ul class="video-more" data-empty={moreVideos.length === 0 ? 'true' : undefined}>
+							{moreVideos.map((video) => (
+								<li>
+									<a href={video.url} target="_blank" rel="noopener noreferrer">
+										<span class="video-more-date">{formatDate(video.published)}</span>
+										<span class="video-more-title">{video.title}</span>
+									</a>
+								</li>
+							))}
+						</ul>
+						<a class="text-cta" href={youtubeUrl} target="_blank" rel="noopener noreferrer">
+							เปิดเพลย์ลิสต์
+						</a>
+					</aside>
+				</div>
+			</section>
+
+			<section id="journal" class="section-wrap journal-section">
+				<div class="journal-heading reveal">
+					<div>
+						<p class="section-kicker">Trail journal</p>
+						<h2>บันทึกที่เพิ่มเข้ามาล่าสุด</h2>
+					</div>
+					<a class="text-cta" href={blogUrl}>ดูบล็อกทั้งหมด</a>
+				</div>
+
+				<div class="journal-layout reveal delay-one" data-journal>
+					{latestTrailPost && (
+						<a class="journal-feature" href={`/blog/${latestTrailPost.slug}/`} data-journal-feature>
+							<img src={latestTrailPost.image} alt={latestTrailPost.title} data-journal-image />
+								<img src={latestTrailPost.image} alt="" aria-hidden="true" data-journal-next-image />
+							<div class="journal-feature-content">
+								<span class="journal-number" data-journal-number>{String(latestTrailPost.id).padStart(2, '0')}</span>
+								<div>
+									<p data-journal-meta>{latestTrailPost.location} · {latestTrailPost.difficulty}</p>
+									<h3 data-journal-title>{latestTrailPost.title}</h3>
+									<span>อ่านเพิ่มเติม →</span>
+								</div>
+							</div>
+						</a>
+					)}
+
+					<div class="journal-stack">
+						{sortedTrailPosts.map((post) => (
+							<a
+								href={`/blog/${post.slug}/`}
+								class="journal-row"
+								data-journal-trigger
+								data-title={post.title}
+								data-image={post.image}
+								data-url={`/blog/${post.slug}/`}
+								data-number={String(post.id).padStart(2, '0')}
+								data-meta={`${post.location} · ${post.difficulty}`}
+							>
+								<span class="journal-number">{String(post.id).padStart(2, '0')}</span>
+								<div>
+									<strong>{post.name}</strong>
+									<small>{post.location} · {formatDate(post.date)}</small>
+								</div>
+							</a>
+						))}
+					</div>
+				</div>
+			</section>
+
+			<section id="route" class="section-wrap route-log">
+				<div class="route-log-grid">
+					<div class="route-copy reveal">
+						<p class="section-kicker">Route log</p>
+						<h2>แผนที่เส้นทางทั้งหมด</h2>
+						<p>
+							รวมบันทึกเดินป่าทุกเส้นทางที่เพิ่มเข้ามา พร้อมพิกัดและบทความของแต่ละทริป
+						</p>
+						<a class="primary-cta compact" href={blogUrl}>
+							อ่านบล็อกทั้งหมด
+						</a>
+					</div>
+
+					<article class="route-card reveal delay-one">
+						<div class="stats-grid">
+							{routeStats.map((stat) => (
+								<div>
+									<span>{stat.label}</span>
+									<strong>{stat.value}</strong>
+								</div>
+							))}
+						</div>
+						<ul class="trail-list">
+							{routeHighlights.map((highlight) => (
+								<li>{highlight}</li>
+							))}
+						</ul>
+					</article>
+				</div>
+
+				<div class="route-map-wrapper reveal delay-one">
+					<RouteMap points={trailPoints} />
+				</div>
+			</section>
+
+			<section id="about" class="section-wrap about-section">
+				<div class="about-statement reveal">
+					<p class="section-kicker">About the channel</p>
+					<h2>พื้นที่สำหรับคนที่อยากเห็นป่าจริง ก่อนตัดสินใจออกเดิน</h2>
+				</div>
+
+				<div class="about-grid reveal delay-one">
+					<div class="image-strip">
+						<img
+							src="/images/trail-hero.webp"
+							alt="แนวสันเขาและหมอกในป่าภูเขา"
+						/>
+						<img
+							src="/images/route-texture.webp"
+							alt="รายละเอียดพื้นทางเดินป่าที่เปียกและลื่น"
+						/>
+					</div>
+					<div class="field-notes">
+						{fieldNotes.map((note) => (
+							<p>{note}</p>
+						))}
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<footer class="site-footer">
+			<div>
+				<strong>Proton Path</strong>
+				<span>Thai trekking notes</span>
+			</div>
+			<nav aria-label="Footer navigation">
+				<a href={youtubeUrl} target="_blank" rel="noopener noreferrer">YouTube</a>
+			</nav>
+			<p>© 2026 Proton Path. All rights reserved.</p>
+		</footer>
+
+		<script>
+			import '../scripts/fetch-videos.ts';
+			import '../scripts/theme-switcher.ts';
+				import '../scripts/journal-hover.ts';
+		</script>
+	</body>
+</html>
