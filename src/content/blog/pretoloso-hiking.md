@@ -7,6 +7,7 @@ image: /images/hiking-blog/20250607_122045.webp
 id: 1
 location: "อุ้มผาง ตาก"
 difficulty: "ยากมาก"
+walkDuration: "4-5 ชม. ถึง Base Camp"
 name: "น้ำตกเปรโต๊ะลอซู"
 nameEn: "Pretoloso Waterfall"
 coords: [15.8649006, 98.6161577]

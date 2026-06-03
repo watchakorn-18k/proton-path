@@ -17,6 +17,8 @@ const trailPoints = trailPosts.map((post) => ({
 	nameEn: post.nameEn,
 	coords: post.coords,
 	date: post.date,
+	walkDuration: post.walkDuration,
+	difficulty: post.difficulty,
 	blogUrl: `/blog/${post.slug}/`,
 }));
 
@@ -76,7 +78,10 @@ const routeStats = [
 	{ label: 'คลังบันทึก', value: 'กำลังขยาย' }
 ];
 
-const routeHighlights = trailPosts.map((post) => `${post.name} — ${post.location} · ${post.difficulty}`);
+const formatTrailMeta = (post: { location: string; difficulty: string; walkDuration?: string }) =>
+	[post.location, post.difficulty, post.walkDuration].filter(Boolean).join(' · ');
+
+const routeHighlights = trailPosts.map((post) => `${post.name} — ${formatTrailMeta(post)}`);
 
 const fieldNotes = [
 	'รักป่า ไม่ใช่แค่มาเดิน แต่คือการดูแลให้ป่ายังอยู่',
@@ -220,7 +225,7 @@ const fieldNotes = [
 							<div class="journal-feature-content">
 								<span class="journal-number" data-journal-number>{String(latestTrailPost.id).padStart(2, '0')}</span>
 								<div>
-									<p data-journal-meta>{latestTrailPost.location} · {latestTrailPost.difficulty}</p>
+									<p data-journal-meta>{formatTrailMeta(latestTrailPost)}</p>
 									<h3 data-journal-title>{latestTrailPost.title}</h3>
 									<span>อ่านเพิ่มเติม →</span>
 								</div>
@@ -239,22 +244,22 @@ const fieldNotes = [
 								data-image={post.image}
 								data-url={`/blog/${post.slug}/`}
 								data-number={String(post.id).padStart(2, '0')}
-								data-meta={`${post.location} · ${post.difficulty}`}
-								data-page={Math.floor(index / 4) + 1}
+								data-meta={formatTrailMeta(post)}
+								data-page={Math.floor(index / 5) + 1}
 							>
 								<span class="journal-number">{String(post.id).padStart(2, '0')}</span>
 								<div>
 									<strong>{post.name}</strong>
-									<small>{post.location} · {formatDate(post.date)}</small>
+									<small>{formatTrailMeta(post)}</small>
 								</div>
 							</a>
 						))}
 					</div>
-					{sortedTrailPosts.length > 4 && (
+					{sortedTrailPosts.length > 5 && (
 						<nav class="content-pagination" aria-label="Trail journal pagination" data-pagination="journal">
 							<button type="button" data-page-prev>ก่อนหน้า</button>
 							<div>
-								{Array.from({ length: Math.ceil(sortedTrailPosts.length / 4) }, (_, index) => (
+								{Array.from({ length: Math.ceil(sortedTrailPosts.length / 5) }, (_, index) => (
 									<button type="button" data-page-button={index + 1}>{index + 1}</button>
 								))}
 							</div>
@@ -289,14 +294,14 @@ const fieldNotes = [
 						</div>
 						<ul class="trail-list" data-paginated-list="route">
 							{routeHighlights.map((highlight, index) => (
-								<li data-page={Math.floor(index / 4) + 1}>{highlight}</li>
+								<li data-page={Math.floor(index / 5) + 1}>{highlight}</li>
 							))}
 						</ul>
-						{routeHighlights.length > 4 && (
+						{routeHighlights.length > 5 && (
 							<nav class="content-pagination route-pagination" aria-label="Route list pagination" data-pagination="route">
 								<button type="button" data-page-prev>ก่อนหน้า</button>
 								<div>
-									{Array.from({ length: Math.ceil(routeHighlights.length / 4) }, (_, index) => (
+									{Array.from({ length: Math.ceil(routeHighlights.length / 5) }, (_, index) => (
 										<button type="button" data-page-button={index + 1}>{index + 1}</button>
 									))}
 								</div>

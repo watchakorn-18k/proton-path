@@ -7,6 +7,7 @@ image: /images/lam-khlong-ngu/cover.webp
 id: 10
 location: "กาญจนบุรี"
 difficulty: "ปานกลาง ร้อน"
+walkDuration: "3-6 ชม. ตามกิจกรรมถ้ำ"
 name: "ถ้ำนกนางแอ่น ลำคลองงู"
 nameEn: "Lam Khlong Ngu National Park"
 coords: [14.819479629118574, 98.83823968427374]

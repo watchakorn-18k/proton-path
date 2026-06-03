@@ -7,6 +7,7 @@ image: /images/phu-soi-dao/cover.webp
 id: 5
 location: "น้ำปาด อุตรดิตถ์ / ชาติตระการ พิษณุโลก"
 difficulty: "ปานกลาง"
+walkDuration: "4-6 ชม. ขึ้นลานสน"
 name: "อุทยานแห่งชาติภูสอยดาว"
 nameEn: "Phu Soi Dao National Park"
 coords: [17.738090084648288, 100.98906317281674]

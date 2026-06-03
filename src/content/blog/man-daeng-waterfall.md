@@ -7,6 +7,7 @@ image: /images/man-daeng/cover.webp
 id: 4
 location: "ภูหินร่องกล้า พิษณุโลก"
 difficulty: "ลื่นและทากชุม"
+walkDuration: "4-6 ชม. ไป-กลับ"
 name: "น้ำตกหมันแดง"
 nameEn: "Man Daeng Waterfall"
 coords: [16.942118833250092, 101.06469846699815]

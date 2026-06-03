@@ -1,4 +1,4 @@
-const pageSize = 4;
+const pageSize = 5;
 
 type Pager = {
 	name: string;

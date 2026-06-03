@@ -7,6 +7,7 @@ image: /images/khao-luang/cover.webp
 id: 2
 location: "สุโขทัย"
 difficulty: "ชันมาก"
+walkDuration: "3-4 ชม. ขึ้นยอด"
 name: "เขาหลวงสุโขทัย"
 nameEn: "Khao Luang Sukhothai"
 coords: [16.863378612088965, 99.67502060100429]
