@@ -36,14 +36,13 @@ const pointsData = JSON.stringify(points);
 			const pointsData = JSON.parse(mapEl.dataset.points || '[]');
 			if (pointsData.length === 0) return;
 
-			const monthShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 			const formatDate = (date) => {
 				if (!date) return '';
 				const parsed = new Date(date);
-				const day = parsed.getDate();
-				const month = monthShort[parsed.getMonth()];
-				const year = String(parsed.getFullYear() + 543).slice(-2);
-				return `${day} ${month} ${year}`;
+				const day = String(parsed.getDate()).padStart(2, '0');
+				const month = String(parsed.getMonth() + 1).padStart(2, '0');
+				const year = parsed.getFullYear();
+				return `${day}/${month}/${year}`;
 			};
 
 			// Center on first point or calculate bounds
