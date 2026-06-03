@@ -46,7 +46,7 @@ const [featuredVideo, ...moreVideos] = latestVideos;
 const dateFmt = new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 const formatDate = (iso: string) => (iso ? dateFmt.format(new Date(iso)) : '');
 
-const sortedTrailPosts = [...trailPosts].sort((a, b) => Number(new Date(b.date)) - Number(new Date(a.date)));
+const sortedTrailPosts = [...trailPosts].sort((a, b) => b.id - a.id);
 const latestTrailPost = sortedTrailPosts[0];
 const otherTrailPosts = sortedTrailPosts.slice(1);
 const locations = [...new Set(trailPosts.map((post) => post.location))];

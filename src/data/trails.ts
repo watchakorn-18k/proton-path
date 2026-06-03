@@ -99,6 +99,20 @@ export const trailPosts: TrailPost[] = [
 		coords: [14.358938641390635, 99.14044130743585]
 	},
 	{
+		id: 8,
+		slug: 'mae-wong-chong-yen',
+		title: 'เที่ยวเดินป่า | อุทยานแห่งชาติแม่วงก์ ช่องเย็น',
+		description: 'บันทึกการเดินป่าอุทยานแห่งชาติแม่วงก์ จุดช่องเย็น เส้นทางธรรมชาติท่ามกลางป่าดิบแล้งและลำธารสวยงาม',
+		date: '2025-12-21',
+		image: '/images/mae-wong-chong-yen/cover.webp',
+		tags: ['hiking', 'nakhon-sawan'],
+		location: 'นครสวรรค์ / กำแพงเพชร',
+		difficulty: 'ปานกลาง',
+		name: 'อุทยานแห่งชาติแม่วงก์ ช่องเย็น',
+		nameEn: 'Mae Wong National Park - Chong Yen',
+		coords: [15.6167, 99.5167]
+	},
+	{
 		id: 10,
 		slug: 'lam-khlong-ngu',
 		title: 'เที่ยวเดินป่า | อุทยานแห่งชาติลำคลองงู ถ้ำนกนางแอ่น',
