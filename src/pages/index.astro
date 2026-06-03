@@ -29,6 +29,7 @@ const trailPoints = trailPosts.map((post) => ({
 
 const youtubeUrl = 'https://www.youtube.com/@proton-path';
 const blogUrl = withBase('/blog/');
+const mediumTrailPdfPageUrl = withBase('/downloads/medium-trails/');
 
 const channelId = 'UCrXDJRi5HCbT9sMJr20vZNA';
 
@@ -74,6 +75,7 @@ const latestTrailPost = sortedTrailPosts[0];
 const otherTrailPosts = sortedTrailPosts.slice(1);
 const locations = [...new Set(trailPosts.map((post) => post.location))];
 const difficulties = [...new Set(trailPosts.map((post) => post.difficulty))];
+const mediumTrailCount = trailPosts.filter((post) => post.difficulty === 'ปานกลาง').length;
 const routeStats = [
 	{ label: 'บันทึกทั้งหมด', value: `${trailPosts.length} ทริป` },
 	{ label: 'พื้นที่', value: locations.join(' / ') },
@@ -284,9 +286,19 @@ const fieldNotes = [
 						<p>
 							รวมบันทึกเดินป่าทุกเส้นทางที่เพิ่มเข้ามา พร้อมพิกัดและบทความของแต่ละทริป
 						</p>
-						<a class="primary-cta compact" href={blogUrl}>
-							อ่านบล็อกทั้งหมด
-						</a>
+						<div class="route-actions">
+							<a class="primary-cta compact" href={blogUrl}>
+								อ่านบล็อกทั้งหมด
+							</a>
+							<a
+								class="primary-cta compact pdf-route-cta"
+								href={mediumTrailPdfPageUrl}
+								aria-label={`เปิดหน้าดาวน์โหลด PDF เส้นทางระดับปานกลาง ${mediumTrailCount} เส้นทาง`}
+							>
+								<span>ดาวน์โหลด PDF ระดับปานกลาง</span>
+								<small>{mediumTrailCount} เส้นทาง</small>
+							</a>
+						</div>
 					</div>
 
 					<article class="route-card reveal delay-one">

@@ -157,13 +157,70 @@ const pointsData = JSON.stringify(points);
 				.sort((a, b) => a.id - b.id)
 				.map((p) => p.coords);
 			const routeLine = L.polyline(orderedCoords, {
-				color: '#a8b879',
+				color: '#ff6b6b',
 				weight: 2.5,
-				opacity: 0.85,
-				dashArray: '6 8',
+				opacity: 0.95,
+				dashArray: '7 8',
+				lineCap: 'round',
 				lineJoin: 'round'
 			});
 			let routeVisible = false;
+
+			// Walking icon that moves along the route path.
+			// Walks segment-by-segment (1→2→3...→last), pauses, then snaps back to 1 and restarts.
+			const walkerIcon = L.divIcon({
+				className: 'route-walker-icon',
+				html: '🥾',
+				iconSize: [22, 22],
+				iconAnchor: [11, 11]
+			});
+			const walkerMarker = L.marker(orderedCoords[0], {
+				icon: walkerIcon,
+				interactive: false,
+				zIndexOffset: 1000
+			});
+			let walkerAnimId: number | null = null;
+
+			const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+			const SEGMENT_DURATION = 6000; // ms per segment — real walking pace, no rush
+			const PAUSE_AT_END = 5000;     // ms rest at last point before heading back
+
+			function startRouteAnim() {
+				if (prefersReducedMotion || orderedCoords.length < 2) return;
+				const segCount = orderedCoords.length - 1;
+				const cycleDuration = segCount * SEGMENT_DURATION + PAUSE_AT_END;
+				const startTime = performance.now();
+
+				function step(now: number) {
+					if (!routeVisible) return;
+					const elapsed = (now - startTime) % cycleDuration;
+					if (elapsed >= segCount * SEGMENT_DURATION) {
+						// Pausing at last point — stay put.
+						walkerMarker.setLatLng(orderedCoords[orderedCoords.length - 1]);
+					} else {
+						const segIndex = Math.min(Math.floor(elapsed / SEGMENT_DURATION), segCount - 1);
+						const segT = (elapsed - segIndex * SEGMENT_DURATION) / SEGMENT_DURATION;
+						const from = orderedCoords[segIndex];
+						const to = orderedCoords[segIndex + 1];
+						const lat = from[0] + (to[0] - from[0]) * segT;
+						const lng = from[1] + (to[1] - from[1]) * segT;
+						walkerMarker.setLatLng([lat, lng]);
+					}
+					// Snap back to point 1 at the very start of each cycle.
+					const cycleElapsed = (now - startTime) % cycleDuration;
+					if (cycleElapsed < 16) {
+						walkerMarker.setLatLng(orderedCoords[0]);
+					}
+					walkerAnimId = requestAnimationFrame(step);
+				}
+				// Defer to let polyline SVG render.
+				setTimeout(() => { walkerAnimId = requestAnimationFrame(step); }, 120);
+			}
+
+			function stopRouteAnim() {
+				if (walkerAnimId) { cancelAnimationFrame(walkerAnimId); walkerAnimId = null; }
+			}
 
 			// Scale tooltip text with zoom: zoomed out = smaller, zoomed in = full size.
 			// The var cascades onto the leaflet tooltip pane inside #route-map.
@@ -275,6 +332,24 @@ const pointsData = JSON.stringify(points);
 			if (resetBtn && initialBounds) {
 				resetBtn.addEventListener('click', () => {
 					map.flyToBounds(initialBounds, { padding: [50, 50], duration: 0.8 });
+				});
+			}
+
+			// Toggle the travel-order route line + walking animation.
+			const routeBtn = toolbar.querySelector('[data-action="toggle-route"]');
+			if (routeBtn) {
+				routeBtn.addEventListener('click', () => {
+					routeVisible = !routeVisible;
+					if (routeVisible) {
+						routeLine.addTo(map);
+						walkerMarker.addTo(map);
+						startRouteAnim();
+					} else {
+						stopRouteAnim();
+						map.removeLayer(walkerMarker);
+						map.removeLayer(routeLine);
+					}
+					routeBtn.classList.toggle('active', routeVisible);
 				});
 			}
 
@@ -467,6 +542,16 @@ const pointsData = JSON.stringify(points);
 		visibility: visible;
 		transform: translateY(0);
 		pointer-events: auto;
+	}
+
+	/* Walking icon marker */
+	:global(.route-walker-icon) {
+		background: transparent !important;
+		border: none !important;
+		font-size: 16px;
+		line-height: 22px;
+		text-align: center;
+		filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
 	}
 
 	/* Difficulty legend (bottom-left) */
