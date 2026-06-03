@@ -147,17 +147,6 @@ const fieldNotes = [
 							<span>Trail archive</span>
 							<strong>{trailPosts.length} routes</strong>
 						</div>
-						<div class="dossier-posts">
-							{trailPosts.map((post) => (
-								<a href={`/blog/${post.slug}/`} class="dossier-post">
-									<span class="dossier-post-index">{String(post.id).padStart(2, '0')}</span>
-									<div>
-										<strong>{post.name}</strong>
-										<small>{post.location} · {post.difficulty}</small>
-									</div>
-								</a>
-							))}
-						</div>
 						<div class="dossier-grid">
 							{routeStats.slice(0, 4).map((stat) => (
 								<div>
@@ -239,6 +228,7 @@ const fieldNotes = [
 						</a>
 					)}
 
+						<div class="journal-side">
 					<div class="journal-stack">
 						{sortedTrailPosts.map((post, index) => (
 							<a
@@ -271,6 +261,7 @@ const fieldNotes = [
 							<button type="button" data-page-next>ถัดไป</button>
 						</nav>
 					)}
+						</div>
 				</div>
 			</section>
 
@@ -361,6 +352,7 @@ const fieldNotes = [
 			import '../scripts/fetch-videos.ts';
 			import '../scripts/theme-switcher.ts';
 				import '../scripts/journal-hover.ts';
+				import '../scripts/pagination.ts';
 		</script>
 	</body>
 </html>

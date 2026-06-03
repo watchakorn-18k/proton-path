@@ -37,8 +37,10 @@ No test suite or lint configuration exists in this project.
 ### Pages and routing
 
 - `src/pages/index.astro` — homepage (Hero, Latest Videos, Route Log, About, Footer)
-- `src/pages/blog/index.astro` — blog listing (posts hardcoded as an array, no CMS)
-- `src/pages/blog/pretoloso-hiking.md` — markdown blog post; uses `layout:` frontmatter to reference `src/layouts/BlogPostLayout.astro`
+- `src/pages/blog/index.astro` — blog listing; reads posts automatically from the `blog` content collection
+- `src/pages/blog/[slug].astro` — dynamic blog route; renders each content collection entry with `src/layouts/BlogPostLayout.astro`
+- `src/content/blog/*.md` — markdown blog posts; frontmatter is the single source of truth for blog cards, route map points, and post pages
+- `src/content/config.ts` — Astro Content Collections schema for required blog frontmatter fields
 
 ### Styling
 
@@ -66,33 +68,51 @@ The channel ID is `UCrXDJRi5HCbT9sMJr20vZNA`.
 
 ### Adding a new blog post
 
-1. Add a `.md` file to `src/pages/blog/` with this frontmatter:
+Blog posts use Astro Content Collections. Do **not** add route `.md` files under `src/pages/blog/`, and do **not** recreate a manual `trails.ts` array. The `.md` frontmatter in `src/content/blog/` is the single source of truth.
+
+1. Add a `.md` file to `src/content/blog/` using the slug as the filename, e.g. `src/content/blog/new-trail-name.md`.
+2. Add all required frontmatter fields:
    ```md
    ---
-   layout: ../../layouts/BlogPostLayout.astro
    title: ""
    description: ""
    date: "YYYY-MM-DD"
    tags: ["hiking"]
-   image: "/images/..."
+   image: "/images/new-trail-name/cover.webp"
+   id: 11
+   location: ""
+   difficulty: ""
+   name: ""
+   nameEn: ""
+   coords: [14.0000, 99.0000]
    ---
    ```
-2. Add an entry to the `posts` array in `src/pages/blog/index.astro` (the listing is not auto-generated from the filesystem).
-3. Place images in `public/images/`.
-4. **Convert all images to WebP/WebM before committing** — see [Image optimization](#image-optimization) below.
+3. Use the next numeric `id` in sequence. This controls route ordering and NO. labels.
+4. Place images in `public/images/<slug>/`.
+5. **Convert all images to WebP/WebM before committing** — see [Image optimization](#image-optimization) below.
+6. Run `npm run build` after adding content. Content Collections validate required fields at build time.
+
+The blog listing, homepage route archive, and map points update automatically from `src/content/blog/*.md`. No extra array entry is needed.
 
 ### Writing blog post content (Markdown guide)
 
 #### Frontmatter fields
 
-| Field | Required | Notes |
+All fields are required and validated by the Content Collections schema at build time.
+
+| Field | Type | Notes |
 |---|---|---|
-| `layout` | yes | always `../../layouts/BlogPostLayout.astro` |
-| `title` | yes | shown as `<h1>` and in `<title>` / OG tags |
-| `description` | yes | shown in OG meta and blog listing card |
-| `date` | yes | ISO format `YYYY-MM-DD`; displayed in Thai locale |
-| `tags` | yes | array of strings, e.g. `["hiking", "travel"]` |
-| `image` | yes | hero image path from `public/`, e.g. `/images/foo/bar.jpg` |
+| `title` | string | Shown as `<h1>` and in `<title>` / OG tags |
+| `description` | string | Shown in OG meta and blog listing card |
+| `date` | string | ISO format `YYYY-MM-DD`; displayed in Thai locale |
+| `tags` | array | Array of strings, e.g. `["hiking", "travel"]` |
+| `image` | string | Hero image path from `public/`, e.g. `/images/foo/cover.webp` |
+| `id` | number | Numeric ID for ordering and NO. labels; use next available number |
+| `location` | string | Thai location name, e.g. `"กาญจนบุรี"` or `"น้ำปาด อุตรดิตถ์"` |
+| `difficulty` | string | Thai difficulty label, e.g. `"ยากมาก"`, `"ชันมาก"`, `"ปานกลาง"`, `"ง่ายมาก"` |
+| `name` | string | Thai trail/park name, e.g. `"น้ำตกเปรโต๊ะลอซู"` |
+| `nameEn` | string | English trail/park name, e.g. `"Pretoloso Waterfall"` |
+| `coords` | tuple | GPS coordinates `[latitude, longitude]`, e.g. `[15.8649, 98.6162]` |
 
 #### Section headings
 
