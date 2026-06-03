@@ -286,7 +286,7 @@ p {
   max-width: 11ch;
   font-size: clamp(2.8rem, 7vw, 5.5rem);
   font-weight: 800;
-  line-height: 0.92;
+  line-height: 1.22;
 }
 
 .hero-lede {
@@ -488,7 +488,7 @@ p {
   max-width: 14ch;
   font-size: clamp(2rem, 4.5vw, 3.8rem);
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.3;
 }
 
 .video-layout {
@@ -840,7 +840,7 @@ p {
 .blog-index-header h1 {
   font-size: clamp(2rem, 4.5vw, 3.8rem);
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.3;
   margin-bottom: 1.5rem;
 }
 
@@ -989,7 +989,7 @@ p {
 .blog-header h1 {
   font-size: clamp(1.8rem, 4vw, 3rem);
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.3;
   margin-bottom: 1.5rem;
 }
 
@@ -1034,7 +1034,7 @@ p {
   margin-bottom: 1.25rem;
   font-size: clamp(1.4rem, 3vw, 2rem);
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.4;
   color: var(--bone);
 }
 
@@ -1224,7 +1224,7 @@ p {
   max-width: 14ch;
   font-size: clamp(2.4rem, 5vw, 4.8rem);
   font-weight: 800;
-  line-height: 0.95;
+  line-height: 1.3;
 }
 
 .journal-layout {
@@ -1306,7 +1306,7 @@ p {
   margin: 0.35rem 0 0.7rem;
   font-family: var(--font-heading);
   font-size: clamp(1.8rem, 4vw, 3.4rem);
-  line-height: 1;
+  line-height: 1.25;
 }
 
 .journal-feature-content span:last-child {

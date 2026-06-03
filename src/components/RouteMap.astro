@@ -58,6 +58,7 @@ const pointsData = JSON.stringify(points);
 
 			const tooltipMarkers: L.Marker[] = [];
 			let tooltipsVisible = true;
+			let metaHidden = false;
 
 			// Difficulty → pin border colors only. All pins share the same dark fill.
 			const pinBorderConfigs = [
@@ -117,22 +118,35 @@ const pointsData = JSON.stringify(points);
 					})
 					.bindPopup(popupContent);
 
+				// Click a pin in a cluster → fly in for a closer look.
+				marker.on('click', () => {
+					map.flyTo(point.coords, 13, { duration: 0.8 });
+				});
+
 				tooltipMarkers.push(marker);
 			});
 
 			// Fit bounds if multiple points
+			let initialBounds: L.LatLngBounds | null = null;
 			if (pointsData.length > 1) {
-				const bounds = L.latLngBounds(pointsData.map(p => p.coords));
-				map.fitBounds(bounds, { padding: [50, 50] });
+				initialBounds = L.latLngBounds(pointsData.map(p => p.coords));
+				map.fitBounds(initialBounds, { padding: [50, 50] });
 			}
 
 			// Tooltip toggle toolbar (bottom-right)
 			const svgLabelOn = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
 			const svgLabelOff = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+			const svgNameOnly = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="12" y2="15"></line></svg>';
+			const svgReset = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 21 3 21 3 15"></polyline><polyline points="15 3 21 3 21 9"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>';
 
 			const toolbar = document.createElement('div');
 			toolbar.className = 'map-toolbar';
 			toolbar.innerHTML = `
+				${initialBounds ? `<button class="map-toolbar-btn" data-action="reset-view" title="กลับมุมมองรวม">${svgReset}<span>มุมรวม</span></button>` : ''}
+				<button class="map-toolbar-btn" data-action="toggle-meta" title="แสดงเฉพาะชื่อทริป">
+					${svgNameOnly}
+					<span>เฉพาะชื่อ</span>
+				</button>
 				<button class="map-toolbar-btn active" data-action="toggle-tooltips" title="เปิด/ปิดข้อความบนแผนที่">
 					${svgLabelOn}
 					<span>ป้ายชื่อ</span>
@@ -159,6 +173,16 @@ const pointsData = JSON.stringify(points);
 					if (svgEl) {
 						svgEl.outerHTML = tooltipsVisible ? svgLabelOn : svgLabelOff;
 					}
+				});
+			}
+
+			// Toggle name-only mode: hides the date / walk-duration meta line.
+			const metaBtn = toolbar.querySelector('[data-action="toggle-meta"]');
+			if (metaBtn) {
+				metaBtn.addEventListener('click', () => {
+					metaHidden = !metaHidden;
+					mapEl.parentElement?.classList.toggle('tooltips-name-only', metaHidden);
+					metaBtn.classList.toggle('active', metaHidden);
 				});
 			}
 
@@ -344,5 +368,10 @@ const pointsData = JSON.stringify(points);
 		font-size: 0.68rem;
 		font-weight: 700;
 		letter-spacing: 0.04em;
+	}
+
+	/* Name-only mode: hide the date / walk-duration line */
+	:global(.tooltips-name-only .map-tooltip-card span) {
+		display: none;
 	}
 </style>
