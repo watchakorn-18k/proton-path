@@ -126,12 +126,27 @@ const pointsData = JSON.stringify(points);
 				tooltipMarkers.push(marker);
 			});
 
+			// Scale tooltip text with zoom: zoomed out = smaller, zoomed in = full size.
+			// The var cascades onto the leaflet tooltip pane inside #route-map.
+			const MIN_ZOOM = 6;   // most zoomed-out (overview) → smallest text
+			const MAX_ZOOM = 11;  // zoomed in → full size
+			const MIN_SCALE = 0.5;
+			const updateLabelScale = () => {
+				const z = map.getZoom();
+				const t = Math.min(Math.max((z - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM), 0), 1);
+				const scale = MIN_SCALE + (1 - MIN_SCALE) * t;
+				mapEl.style.setProperty('--label-scale', scale.toFixed(3));
+			};
+			map.on('zoom zoomend', updateLabelScale);
+
 			// Fit bounds if multiple points
 			let initialBounds: L.LatLngBounds | null = null;
 			if (pointsData.length > 1) {
 				initialBounds = L.latLngBounds(pointsData.map(p => p.coords));
 				map.fitBounds(initialBounds, { padding: [50, 50] });
 			}
+
+			updateLabelScale();
 
 			// Tooltip toggle toolbar (bottom-right)
 			const svgLabelOn = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
@@ -185,6 +200,34 @@ const pointsData = JSON.stringify(points);
 					metaBtn.classList.toggle('active', metaHidden);
 				});
 			}
+
+			// Reset to the overview that fits all points.
+			const resetBtn = toolbar.querySelector('[data-action="reset-view"]');
+			if (resetBtn && initialBounds) {
+				resetBtn.addEventListener('click', () => {
+					map.flyToBounds(initialBounds, { padding: [50, 50], duration: 0.8 });
+				});
+			}
+
+			// Difficulty colour legend (bottom-left)
+			const legendItems = [
+				{ color: '#e0564a', label: 'ยากมาก' },
+				{ color: '#e8954e', label: 'ยาก / ชัน' },
+				{ color: '#e6c34d', label: 'ปานกลาง' },
+				{ color: '#5fb87a', label: 'ง่าย' }
+			];
+			const legend = document.createElement('div');
+			legend.className = 'map-legend';
+			legend.innerHTML = `
+				<span class="map-legend-title">ระดับความยาก</span>
+				${legendItems.map((it) => `
+					<span class="map-legend-item">
+						<span class="map-legend-dot" style="border-color: ${it.color};"></span>
+						${it.label}
+					</span>
+				`).join('')}
+			`;
+			mapEl.parentElement?.appendChild(legend);
 
 		} catch (error) {
 			console.error('Map init error:', error);
@@ -276,6 +319,59 @@ const pointsData = JSON.stringify(points);
 		stroke: var(--moss);
 	}
 
+	/* Difficulty legend (bottom-left) */
+	:global(.map-legend) {
+		position: absolute;
+		bottom: 28px;
+		left: 10px;
+		z-index: 1000;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 8px 10px;
+		background: rgb(13 26 19 / 0.9);
+		border: 1px solid var(--line);
+		border-radius: 0.375rem;
+		backdrop-filter: blur(8px);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+	}
+
+	:global(.map-legend-title) {
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	:global(.map-legend-item) {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--bone);
+		font-size: 0.7rem;
+		font-weight: 600;
+	}
+
+	:global(.map-legend-dot) {
+		width: 11px;
+		height: 11px;
+		border-radius: 50%;
+		border: 2.5px solid var(--moss);
+		background: var(--forest-900);
+		flex-shrink: 0;
+	}
+
+	@media (max-width: 480px) {
+		:global(.map-legend) {
+			padding: 6px 8px;
+		}
+		:global(.map-legend-item) {
+			font-size: 0.62rem;
+		}
+	}
+
 	:global(.leaflet-container) {
 		font-family: var(--font-body);
 	}
@@ -304,7 +400,7 @@ const pointsData = JSON.stringify(points);
 		background: var(--forest-900);
 		border: 2.5px solid var(--moss);
 		border-radius: 50% 50% 50% 0;
-		transform: rotate(-45deg);
+		transform: rotate(-45deg) scale(var(--label-scale, 1));
 		box-shadow: 0 4px 10px rgb(7 17 13 / 0.55);
 		display: flex;
 		align-items: center;
@@ -327,7 +423,7 @@ const pointsData = JSON.stringify(points);
 	}
 
 	:global(.custom-pin:hover .pin-inner) {
-		transform: rotate(-45deg) scale(1.12);
+		transform: rotate(-45deg) scale(calc(var(--label-scale, 1) * 1.12));
 		box-shadow: 0 6px 16px rgb(7 17 13 / 0.7);
 		z-index: 1000;
 	}
@@ -358,16 +454,21 @@ const pointsData = JSON.stringify(points);
 
 	:global(.map-tooltip-card strong) {
 		color: var(--bone);
-		font-size: 0.8rem;
+		font-size: calc(0.8rem * var(--label-scale, 1));
 		line-height: 1.25;
 	}
 
 	:global(.map-tooltip-card span) {
 		color: var(--moss);
 		font-family: var(--font-mono);
-		font-size: 0.68rem;
+		font-size: calc(0.68rem * var(--label-scale, 1));
 		font-weight: 700;
 		letter-spacing: 0.04em;
+	}
+
+	/* Shrink padding alongside the text when zoomed out */
+	:global(.map-tooltip-card) {
+		padding: calc(0.45rem * var(--label-scale, 1)) calc(0.65rem * var(--label-scale, 1));
 	}
 
 	/* Name-only mode: hide the date / walk-duration line */

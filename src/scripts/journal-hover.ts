@@ -102,6 +102,37 @@ if (journal) {
 		trigger.addEventListener('focus', () => setActive(trigger, index));
 	});
 
+	// Pointer parallax on the cover feature: image drifts toward the cursor,
+	// content drifts opposite for a subtle sense of depth.
+	if (feature && !reduceMotion) {
+		const imageLayers = [image, nextImageLayer].filter(Boolean) as HTMLImageElement[];
+		const IMG_SHIFT = 14;
+		const CONTENT_SHIFT = 10;
+
+		const contentEl = feature.querySelector<HTMLElement>('.journal-feature-content');
+		const imgX = imageLayers.map((el) => gsap.quickTo(el, 'x', { duration: 0.6, ease: 'power3.out' }));
+		const imgY = imageLayers.map((el) => gsap.quickTo(el, 'y', { duration: 0.6, ease: 'power3.out' }));
+		const contentX = contentEl ? gsap.quickTo(contentEl, 'x', { duration: 0.6, ease: 'power3.out' }) : null;
+		const contentY = contentEl ? gsap.quickTo(contentEl, 'y', { duration: 0.6, ease: 'power3.out' }) : null;
+
+		feature.addEventListener('pointermove', (event) => {
+			const rect = feature.getBoundingClientRect();
+			const nx = (event.clientX - rect.left) / rect.width - 0.5;
+			const ny = (event.clientY - rect.top) / rect.height - 0.5;
+			imgX.forEach((fn) => fn(nx * IMG_SHIFT));
+			imgY.forEach((fn) => fn(ny * IMG_SHIFT));
+			contentX?.(nx * -CONTENT_SHIFT);
+			contentY?.(ny * -CONTENT_SHIFT);
+		});
+
+		feature.addEventListener('pointerleave', () => {
+			imgX.forEach((fn) => fn(0));
+			imgY.forEach((fn) => fn(0));
+			contentX?.(0);
+			contentY?.(0);
+		});
+	}
+
 	journal.addEventListener('mouseenter', () => {
 		paused = true;
 	});
