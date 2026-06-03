@@ -83,6 +83,34 @@ export const trailPosts: TrailPost[] = [
 		name: 'อุทยานแห่งชาติภูสอยดาว',
 		nameEn: 'Phu Soi Dao National Park',
 		coords: [17.738090084648288, 100.98906317281674]
+	},
+	{
+		id: 7,
+		slug: 'erawan-waterfall',
+		title: 'เที่ยวเดินป่า | อุทยานแห่งชาติน้ำตกเอรวัณ จังหวัดกาญจนบุรี',
+		description: 'จุดแวะพักระหว่างทางก่อนขึ้นสันหนอกวัว เส้นทางเดินง่ายแต่ร้อน เหมาะกับคนไปเล่นน้ำและถ่ายรูป',
+		date: '2026-05-20',
+		image: '/images/erawan/cover.webp',
+		tags: ['hiking', 'kanchanaburi', 'waterfall'],
+		location: 'กาญจนบุรี',
+		difficulty: 'ง่าย ร้อน',
+		name: 'อุทยานแห่งชาติน้ำตกเอรวัณ',
+		nameEn: 'Erawan National Park',
+		coords: [14.358938641390635, 99.14044130743585]
+	},
+	{
+		id: 10,
+		slug: 'lam-khlong-ngu',
+		title: 'เที่ยวเดินป่า | อุทยานแห่งชาติลำคลองงู ถ้ำนกนางแอ่น',
+		description: 'บันทึกการผจญภัยถ้ำนกนางแอ่น เดินป่าปีนขึ้นถ้ำช่วงแรกร้อนและเหนื่อย ผ่านถ้ำประตูทะลุมิติ แล้วลงเล่นน้ำและโดดผาสุดมันส์ จองยากแต่คุ้มค่า',
+		date: '2026-03-16',
+		image: '/images/lam-khlong-ngu/cover.webp',
+		tags: ['hiking', 'kanchanaburi', 'cave'],
+		location: 'กาญจนบุรี',
+		difficulty: 'ปานกลาง ร้อน',
+		name: 'ถ้ำนกนางแอ่น ลำคลองงู',
+		nameEn: 'Lam Khlong Ngu National Park',
+		coords: [14.819479629118574, 98.83823968427374]
 	}
 ];
 
@@ -91,5 +119,6 @@ export const trailPoints = trailPosts.map((post) => ({
 	name: post.name,
 	nameEn: post.nameEn,
 	coords: post.coords,
+	date: post.date,
 	blogUrl: `/blog/${post.slug}/`
 }));

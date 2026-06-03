@@ -5,6 +5,7 @@ export interface TrailPoint {
 	name: string;
 	nameEn: string;
 	coords: [number, number];
+	date?: string;
 	blogUrl: string;
 }
 
@@ -35,6 +36,16 @@ const pointsData = JSON.stringify(points);
 			const pointsData = JSON.parse(mapEl.dataset.points || '[]');
 			if (pointsData.length === 0) return;
 
+			const monthShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+			const formatDate = (date) => {
+				if (!date) return '';
+				const parsed = new Date(date);
+				const day = parsed.getDate();
+				const month = monthShort[parsed.getMonth()];
+				const year = String(parsed.getFullYear() + 543).slice(-2);
+				return `${day} ${month} ${year}`;
+			};
+
 			// Center on first point or calculate bounds
 			const firstPoint = pointsData[0];
 			const map = L.map('route-map').setView(firstPoint.coords, 9);
@@ -53,18 +64,31 @@ const pointsData = JSON.stringify(points);
 					iconAnchor: [18, 36]
 				});
 
+				const pointDate = formatDate(point.date);
 				const popupContent = `
 					<div style="min-width: 180px;">
 						<b>${point.name}</b><br>
-						<small style="color: rgba(237, 231, 213, 0.7);">${point.nameEn} • ป่าที่ ${point.id}</small><br>
+						<small style="color: rgba(237, 231, 213, 0.7);">${point.nameEn} • ${pointDate}</small><br>
 						<a href="${point.blogUrl}" style="color: #a8b879; text-decoration: none; font-weight: 600; font-size: 0.9rem; display: inline-block; margin-top: 0.5rem;">
 							อ่านเพิ่มเติม →
 						</a>
 					</div>
 				`;
+				const tooltipContent = `
+					<div class="map-tooltip-card">
+						<strong>${point.name}</strong>
+						<span>${pointDate}</span>
+					</div>
+				`;
 
 				L.marker(point.coords, { icon: customIcon })
 					.addTo(map)
+					.bindTooltip(tooltipContent, {
+						permanent: true,
+						direction: 'top',
+						offset: [0, -38],
+						className: 'map-point-tooltip'
+					})
 					.bindPopup(popupContent);
 			});
 
@@ -154,5 +178,42 @@ const pointsData = JSON.stringify(points);
 
 	:global(.custom-pin:hover .pin-inner) {
 		transform: rotate(-45deg) scale(1.1);
+	}
+
+	/* Always-visible map tooltip */
+	:global(.map-point-tooltip) {
+		border: 1px solid rgb(237 231 213 / 0.18) !important;
+		border-radius: 0.375rem !important;
+		background: rgb(13 26 19 / 0.92) !important;
+		box-shadow: 0 6px 18px rgb(0 0 0 / 0.28) !important;
+		color: var(--bone) !important;
+		padding: 0 !important;
+		backdrop-filter: blur(12px);
+	}
+
+	:global(.map-point-tooltip::before) {
+		border-top-color: rgb(13 26 19 / 0.92) !important;
+	}
+
+	:global(.map-tooltip-card) {
+		display: grid;
+		gap: 0.15rem;
+		padding: 0.45rem 0.65rem;
+		min-width: 8rem;
+		white-space: nowrap;
+	}
+
+	:global(.map-tooltip-card strong) {
+		color: var(--bone);
+		font-size: 0.8rem;
+		line-height: 1.25;
+	}
+
+	:global(.map-tooltip-card span) {
+		color: var(--moss);
+		font-family: var(--font-mono);
+		font-size: 0.68rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
 	}
 </style>
