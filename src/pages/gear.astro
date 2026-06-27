@@ -1,0 +1,1262 @@
+---
+import ThemeSwitcher from '../components/ThemeSwitcher.astro'
+const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+const withBase = (p: string) => `${base}${p.startsWith('/') ? p : `/${p}`}`
+---
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>อุปกรณ์เดินป่า - Proton Path</title>
+  <meta name="description" content="รวมอุปกรณ์เดินป่าที่จำเป็น เลือกอย่างไร ราคาเท่าไหร่ พร้อม 3D isometric explorer คลิกที่อุปกรณ์เพื่อดูรายละเอียด" />
+  <meta property="og:title" content="อุปกรณ์เดินป่า - Proton Path" />
+  <meta property="og:description" content="รวมอุปกรณ์เดินป่าที่จำเป็น สำรวจแบบ 3D isometric" />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;600;700&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet" />
+
+  <script type="importmap" is:inline>
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.module.js"
+    }
+  }
+  </script>
+
+  <style is:inline>
+    :root, [data-theme="dark"], [data-theme="system"] {
+      --forest-950: #07110d; --forest-900: #0d1a13;
+      --moss: #a8b879; --bone: #ede7d5; --muted: #a8a18a;
+      --line: rgb(237 231 213 / 0.14);
+    }
+    [data-theme="oled-dark"] {
+      --forest-950: #000000; --forest-900: #0a0a0a;
+      --moss: #a8b879; --bone: #ede7d5; --muted: #a8a18a;
+      --line: rgb(237 231 213 / 0.12);
+    }
+    [data-theme="light"] {
+      --forest-950: #f5f5f0; --forest-900: #ffffff;
+      --moss: #6b7a3e; --bone: #1a1a1a; --muted: #5a5a4a;
+      --line: rgb(26 26 26 / 0.12);
+    }
+    @media (prefers-color-scheme: light) {
+      [data-theme="system"] {
+        --forest-950: #f5f5f0; --forest-900: #ffffff;
+        --moss: #6b7a3e; --bone: #1a1a1a; --muted: #5a5a4a;
+        --line: rgb(26 26 26 / 0.12);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--forest-950);
+      font-family: 'Bai Jamjuree', 'IBM Plex Sans Thai', ui-sans-serif, sans-serif;
+      color: var(--bone);
+    }
+
+    /* ── Navigation ── */
+    .site-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; gap: 2rem;
+      padding: 0.7rem 2rem;
+      background: color-mix(in srgb, var(--forest-950) 88%, transparent);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand-mark {
+      display: inline-grid;
+      gap: 0;
+      font-family: 'Bai Jamjuree', ui-sans-serif, sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      text-decoration: none;
+    }
+    .brand-mark span:first-child { color: var(--bone) }
+    .brand-mark span:last-child  { color: var(--moss) }
+    .site-nav nav { display: flex; gap: 1.5rem; margin-left: auto }
+    .site-nav nav a {
+      text-decoration: none; color: var(--muted); font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+    .site-nav nav a:hover, .site-nav nav a.active { color: var(--bone) }
+
+    /* ── Canvas ── */
+    #scene {
+      position: fixed; inset: 0; display: block;
+      touch-action: none;
+    }
+
+    /* ── Item labels ── */
+    .item-label {
+      position: fixed; top: 0; left: 0; z-index: 10;
+      pointer-events: none;
+      text-align: center;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      transition: color 0.25s, opacity 0.25s, transform 0.1s;
+      white-space: nowrap;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.7);
+      will-change: transform;
+    }
+
+    /* ── Gear Panel ── */
+    .gear-panel {
+      position: fixed; top: 0; right: 0; bottom: 0; z-index: 200;
+      width: 340px;
+      background: color-mix(in srgb, var(--forest-900) 97%, transparent);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-left: 1px solid var(--line);
+      padding: 5rem 1.75rem 2rem;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--moss) 30%, transparent) transparent;
+    }
+    .gear-panel.open { transform: translateX(0) }
+
+    .panel-close {
+      position: absolute; top: 1.1rem; right: 1.25rem;
+      background: none; border: 1px solid color-mix(in srgb, var(--bone) 15%, transparent);
+      border-radius: 4px; cursor: pointer; color: var(--muted);
+      font-size: 0.85rem; padding: 0.3rem 0.6rem;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .panel-close:hover { border-color: color-mix(in srgb, var(--moss) 50%, transparent); color: var(--moss) }
+
+    .panel-tags {
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+      margin-bottom: 1.25rem;
+    }
+    .p-tag {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      border: 1px solid color-mix(in srgb, var(--moss) 35%, transparent);
+      border-radius: 2px; color: var(--moss);
+    }
+
+    .panel-name {
+      font-size: 1.9rem; font-weight: 700; line-height: 1.1;
+      color: var(--bone); margin-bottom: 0.3rem;
+    }
+    .panel-name-en {
+      font-size: 0.8rem; color: var(--muted);
+      letter-spacing: 0.06em; margin-bottom: 1.4rem;
+    }
+    .panel-desc {
+      font-size: 0.875rem; line-height: 1.75;
+      color: var(--muted); margin-bottom: 1.5rem;
+      border-left: 2px solid color-mix(in srgb, var(--moss) 30%, transparent);
+      padding-left: 1rem;
+    }
+
+    .price-box {
+      background: color-mix(in srgb, var(--moss) 7%, transparent);
+      border: 1px solid color-mix(in srgb, var(--moss) 20%, transparent);
+      border-radius: 6px; padding: 0.85rem 1rem;
+      margin-bottom: 1.5rem;
+      display: flex; align-items: baseline; gap: 0.6rem;
+    }
+    .price-label {
+      font-size: 0.72rem; color: var(--muted); letter-spacing: 0.05em;
+    }
+    .price-value {
+      font-size: 1.15rem; font-weight: 700; color: var(--moss);
+    }
+
+    .tips-heading {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: color-mix(in srgb, var(--moss) 70%, transparent); margin-bottom: 0.85rem;
+    }
+    .tips-list {
+      list-style: none; display: flex; flex-direction: column; gap: 0.65rem;
+    }
+    .tips-list li {
+      font-size: 0.83rem; line-height: 1.55; color: var(--muted);
+      padding-left: 1.25rem; position: relative;
+    }
+    .tips-list li::before {
+      content: '›'; position: absolute; left: 0;
+      color: var(--moss); font-size: 1rem;
+    }
+
+    /* ── Buy link ── */
+    .panel-buy {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.65rem 1rem;
+      background: color-mix(in srgb, var(--moss) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--moss) 35%, transparent);
+      border-radius: 6px; margin-bottom: 1.25rem;
+      color: var(--moss); font-size: 0.83rem; font-weight: 700;
+      text-decoration: none; letter-spacing: 0.04em;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .panel-buy:hover {
+      background: color-mix(in srgb, var(--moss) 22%, transparent);
+      border-color: color-mix(in srgb, var(--moss) 60%, transparent);
+    }
+
+    /* ── Divider ── */
+    .panel-divider {
+      height: 1px; background: var(--line);
+      margin: 1.5rem 0;
+    }
+
+    /* ── Hint ── */
+    .gear-hint {
+      position: fixed; bottom: 1.75rem; left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.72rem; color: color-mix(in srgb, var(--moss) 60%, transparent);
+      letter-spacing: 0.12em; text-transform: uppercase;
+      pointer-events: none;
+      animation: hintAnim 4s ease 1.5s forwards;
+      opacity: 0;
+    }
+    @keyframes hintAnim {
+      0%   { opacity: 0; transform: translateX(-50%) translateY(4px) }
+      15%  { opacity: 1; transform: translateX(-50%) translateY(0) }
+      70%  { opacity: 1; transform: translateX(-50%) translateY(0) }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-4px) }
+    }
+
+    /* ── Responsive: mobile panel full-width from bottom ── */
+    @media (max-width: 640px) {
+      .gear-panel {
+        top: auto; left: 0; right: 0; bottom: 0;
+        width: 100%; height: 65vh;
+        border-left: none;
+        border-top: 1px solid var(--line);
+        padding: 1.5rem 1.25rem;
+        transform: translateY(100%);
+      }
+      .gear-panel.open { transform: translateY(0) }
+    }
+
+    /* ── Theme Switcher ── */
+    .theme-switcher { position: relative; margin-left: 0.75rem; }
+    .theme-toggle {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 0.6rem; border: 1px solid var(--line);
+      border-radius: 0.375rem; background: transparent; color: var(--bone);
+      font-family: 'Bai Jamjuree', ui-sans-serif, sans-serif;
+      font-size: 0.9rem; cursor: pointer;
+      transition: border-color 180ms, background-color 180ms;
+    }
+    .theme-toggle:hover {
+      border-color: color-mix(in srgb, var(--moss) 35%, transparent);
+      background: color-mix(in srgb, var(--moss) 5%, transparent);
+    }
+    .theme-icon { display: flex; width: 1.1rem; height: 1.1rem; align-items: center; justify-content: center; }
+    .theme-menu {
+      position: absolute; top: calc(100% + 0.5rem); right: 0; z-index: 300;
+      min-width: 11rem; border: 1px solid var(--line); border-radius: 0.5rem;
+      background: var(--forest-900);
+      box-shadow: 0 8px 24px color-mix(in srgb, var(--forest-950) 40%, transparent);
+      opacity: 0; visibility: hidden; transform: translateY(-8px);
+      transition: opacity 180ms, transform 180ms, visibility 180ms;
+    }
+    .theme-menu[data-open="true"] { opacity: 1; visibility: visible; transform: translateY(0); }
+    .theme-menu button {
+      display: flex; align-items: center; gap: 0.75rem;
+      width: 100%; padding: 0.75rem 1rem 0.75rem 2.25rem;
+      border: 0; border-top: 1px solid var(--line);
+      background: transparent; color: var(--muted);
+      font-family: 'Bai Jamjuree', ui-sans-serif, sans-serif;
+      font-size: 0.875rem; text-align: left; cursor: pointer; position: relative;
+      transition: background-color 180ms, color 180ms;
+    }
+    .theme-menu button:first-child { border-top: 0; border-radius: 0.5rem 0.5rem 0 0; }
+    .theme-menu button:last-child  { border-radius: 0 0 0.5rem 0.5rem; }
+    .theme-menu button:hover { background: color-mix(in srgb, var(--moss) 10%, transparent); color: var(--bone); }
+    .theme-menu button[data-active="true"] { color: var(--moss); font-weight: 700; background: color-mix(in srgb, var(--moss) 12%, transparent); }
+    .theme-menu button[data-active="true"]::before { content: '✓'; position: absolute; left: 0.75rem; color: var(--moss); }
+  </style>
+</head>
+
+<body>
+  <canvas id="scene"></canvas>
+
+  <header class="site-nav">
+    <a class="brand-mark" href={withBase('/')} aria-label="Proton Path home">
+      <span>Proton</span><span>◄ Path</span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href={withBase('/#video')}>คลิปล่าสุด</a>
+      <a href={withBase('/#route')}>เส้นทาง</a>
+      <a href={withBase('/blog/')}>บล็อก</a>
+      <a href={withBase('/gear/')} class="active">อุปกรณ์</a>
+    </nav>
+    <ThemeSwitcher />
+  </header>
+
+  <div class="gear-panel" id="gear-panel">
+    <button class="panel-close" id="panel-close">✕ ปิด</button>
+    <div class="panel-tags" id="panel-tags"></div>
+    <h2 class="panel-name" id="panel-name"></h2>
+    <p class="panel-name-en" id="panel-name-en"></p>
+    <p class="panel-desc" id="panel-desc"></p>
+    <div class="price-box">
+      <span class="price-label">ราคาประมาณ</span>
+      <span class="price-value" id="panel-price"></span>
+    </div>
+    <a class="panel-buy" id="panel-buy" href="#" target="_blank" rel="noopener noreferrer" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      ซื้อได้ที่ Shopee
+    </a>
+    <div class="panel-divider"></div>
+    <p class="tips-heading">Tips ก่อนซื้อ</p>
+    <ul class="tips-list" id="panel-tips"></ul>
+  </div>
+
+  <p class="gear-hint">คลิกที่อุปกรณ์เพื่อดูรายละเอียด</p>
+
+  <script type="module" is:inline>
+import * as THREE from 'three'
+
+// ─────────────────────────────────────────────────────────────
+// GEAR DATA
+// ─────────────────────────────────────────────────────────────
+const GEAR = [
+  {
+    name: 'เป้สะพายหลัง Gregory Zulu 55L',
+    nameEn: 'Gregory Zulu 55L',
+    tags: ['จำเป็นมาก', 'ค้างคืน', '55L'],
+    price: '~12,805 ฿',
+    desc: 'Gregory Zulu 55 เป้เดินป่าระดับ premium ที่ใช้จริงในทริปนี้ ระบบหลัง Float-On-Air™ Suspension รับน้ำหนักได้ดีและระบายความร้อนแม้เดินชัน hip belt นุ่ม กระจายน้ำหนักลงสะโพกได้จริง ขนาด 55L พอดีกับการเดิน 3–5 วัน',
+    tips: ['Hip belt รัดที่ยอดกระดูกสะโพก ไม่ใช่เอว', 'ปรับ torso length ก่อนใส่จริงทุกครั้ง', 'มีช่อง hydration sleeve ด้านในและ trekking pole attachment'],
+    link: 'https://s.shopee.co.th/9pcHeUSTgY',
+  },
+  {
+    name: 'เต็นท์เดินป่า',
+    nameEn: 'Backpacking Tent',
+    tags: ['ค้างคืน', 'กันฝน'],
+    price: '3,000 – 15,000 ฿',
+    desc: 'เลือกแบบ 3-season ที่กันน้ำได้จริง กางง่าย น้ำหนักรวมไม่เกิน 2 กก. พื้นที่ใช้สอยพอดีสำหรับ 1–2 คนและเป้ มีระบบระบายอากาศดีป้องกันการควบแน่น',
+    tips: ['HH ≥ 3000mm ถึงจะกันฝนหนักได้', 'ซ้อมกางก่อนถึงป่า', 'เช็ค seam tape ทุกตะเข็บ'],
+  },
+  {
+    name: 'ขวดน้ำ / ถุงน้ำ',
+    nameEn: 'Hydration System',
+    tags: ['จำเป็นมาก', 'น้ำหนักเบา'],
+    price: '200 – 2,500 ฿',
+    desc: 'น้ำคือสิ่งสำคัญที่สุดบนเส้นทาง ควรพกอย่างน้อย 2–3 ลิตร ขวดกรองน้ำ (Sawyer, Katadyn) ช่วยลดน้ำหนักได้มากในทริปที่มีน้ำธรรมชาติ',
+    tips: ['พก ≥ 1 ลิตรต่อ 2 ชม. ในอากาศร้อน', 'ขวดฝาเกลียวมั่นใจกว่าฝากด', 'Hydration bladder สะดวกแต่ล้างยาก'],
+  },
+  {
+    name: 'ไฟฉายคาดหัว',
+    nameEn: 'Headlamp',
+    tags: ['จำเป็นมาก'],
+    price: '300 – 3,000 ฿',
+    desc: 'ต้องมีทุกทริปโดยไม่มีข้อยกเว้น ทั้งสำหรับออกเดินเช้ามืด กลับค่ำ หรือใช้ในเต็นท์ ควรเลือกที่มีความสว่าง ≥ 200 lumen และชาร์จ USB ได้',
+    tips: ['Petzl / Black Diamond คือมาตรฐาน', 'ตรวจแบตก่อนออกทริปทุกครั้ง', 'พกถ่านสำรองหรือ power bank'],
+  },
+  {
+    name: 'ไม้เท้าเดินป่า',
+    nameEn: 'Trekking Poles',
+    tags: ['แนะนำ', 'ทางชัน'],
+    price: '500 – 5,000 ฿',
+    desc: 'ช่วยลดแรงกระแทกที่เข่าได้ถึง 30% บนทางชันลง และเพิ่มความสมดุลบนหินลื่น ขาดิบที่บวมมาก มักมาจากการไม่ใช้ไม้เท้า',
+    tips: ['ความยาวที่ถูก: ข้อศอกงอ 90° เมื่อจับ', 'คาร์บอนเบากว่า อลูมิเนียมทนกว่า', 'ระบบ quick-lock สะดวกกว่าเกลียว'],
+  },
+  {
+    name: 'ถุงนอน',
+    nameEn: 'Sleeping Bag',
+    tags: ['ค้างคืน', 'อุ่น'],
+    price: '1,200 – 8,000 ฿',
+    desc: 'เลือก temperature rating ให้ต่ำกว่าอุณหภูมิต่ำสุดของจุดหมาย ดอยสูงในไทยช่วงหน้าหนาวลงถึง 5–10°C ควรใช้ถุงนอน Comfort 0–5°C',
+    tips: ['ดูค่า Comfort rating ไม่ใช่ Extreme', 'Down เบา อุ่นกว่า แต่แห้งช้า', 'Liner ช่วยเพิ่มความอบอุ่น 5–8°C'],
+  },
+  {
+    name: 'เสื้อกันฝน Hardshell',
+    nameEn: 'Rain Jacket',
+    tags: ['หน้าฝน', 'สำคัญ'],
+    price: '1,500 – 12,000 ฿',
+    desc: 'จำเป็นมากในหน้าฝนไทย ควรเลือกแบบที่กันน้ำได้จริง (ไม่ใช่แค่ water-resistant) มีซิป pit zip ระบายอากาศ น้ำหนักเบา < 500g',
+    tips: ['Gore-Tex / eVent / H2No คือมาตรฐาน', 'ตรวจ seam tape ด้านในต้องครบ', 'ซัก NikWax ฟื้นฟู DWR ทุก 5–10 ครั้ง'],
+  },
+  {
+    name: 'นาฬิกา GPS',
+    nameEn: 'GPS Watch',
+    tags: ['เทคโนโลยี', 'วางแผน'],
+    price: '5,000 – 30,000 ฿',
+    desc: 'Garmin หรือ Suunto สำหรับติดตามเส้นทาง ระยะทาง ความสูง อัตราการเต้นหัวใจ ข้อมูลเหล่านี้ช่วยวางแผนทริปและรู้จักร่างกายตัวเองมากขึ้น',
+    tips: ['Garmin Instinct เป็นตัวเริ่มต้นที่ดี', 'ชาร์จเต็มและ sync map ก่อนออก', 'Download topo map ล่วงหน้าเสมอ'],
+  },
+  {
+    name: 'เป้สะพายหลัง naturehike 70L',
+    nameEn: 'Naturehike Discovery 70L',
+    tags: ['ค้างคืน', '70L', 'ราคาประหยัด'],
+    price: '~3,744 ฿',
+    desc: 'Naturehike Discovery 70L เป้ใบใหญ่สำหรับทริปหลายวัน โครงภายในแบบ internal frame แข็งแรง หน้าเป้มีระบบ compression strap แบบ X กระจายน้ำหนักดีในราคาที่จับต้องได้ เหมาะสำหรับคนเริ่มต้นหรือทริปที่ต้องพกของเยอะ',
+    tips: ['แพ็คของหนักไว้ใกล้หลัง ไม่ใช่ด้านนอก', 'Compression strap ด้านข้างช่วยลดการโยกของเป้', 'ลองแบกทดสอบก่อนทริปจริงเสมอ'],
+    link: 'https://s.shopee.co.th/2Vpgv7OHXl',
+  },
+]
+
+// ─────────────────────────────────────────────────────────────
+// SCENE SETUP
+// ─────────────────────────────────────────────────────────────
+const canvas = document.getElementById('scene')
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.setClearColor(0x07110d)
+
+const scene = new THREE.Scene()
+scene.fog = new THREE.FogExp2(0x07110d, 0.018)
+
+// Orthographic isometric camera
+let frustumSize = 10
+const camera = new THREE.OrthographicCamera()
+
+function updateCamera() {
+  const aspect = window.innerWidth / window.innerHeight
+  camera.left   = -frustumSize * aspect / 2
+  camera.right  =  frustumSize * aspect / 2
+  camera.top    =  frustumSize / 2
+  camera.bottom = -frustumSize / 2
+  camera.near   = 0.1
+  camera.far    = 300
+  camera.updateProjectionMatrix()
+}
+updateCamera()
+camera.position.set(16, 13, 12)
+camera.lookAt(0, 0.4, 0)
+
+renderer.setSize(window.innerWidth, window.innerHeight)
+
+// ─────────────────────────────────────────────────────────────
+// LIGHTING
+// ─────────────────────────────────────────────────────────────
+const hemi = new THREE.HemisphereLight(0x3a6240, 0x07110d, 1.8)
+scene.add(hemi)
+
+const sun = new THREE.DirectionalLight(0xfff8e8, 2.8)
+sun.position.set(12, 18, 10)
+sun.castShadow = true
+sun.shadow.mapSize.width  = 2048
+sun.shadow.mapSize.height = 2048
+sun.shadow.camera.near = 1
+sun.shadow.camera.far  = 80
+sun.shadow.camera.left = sun.shadow.camera.bottom = -16
+sun.shadow.camera.right = sun.shadow.camera.top  =  16
+sun.shadow.bias = -0.001
+scene.add(sun)
+
+const fill = new THREE.DirectionalLight(0x446688, 0.5)
+fill.position.set(-8, 6, -8)
+scene.add(fill)
+
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+function ph(color, shininess = 20, extra = {}) {
+  return new THREE.MeshPhongMaterial({ color, shininess, ...extra })
+}
+function box(w, h, d, color, shininess = 20, extra = {}) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), ph(color, shininess, extra))
+  m.castShadow = true; m.receiveShadow = true
+  return m
+}
+function cyl(rt, rb, h, color, segs = 12, shininess = 20, extra = {}) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, segs), ph(color, shininess, extra))
+  m.castShadow = true; m.receiveShadow = true
+  return m
+}
+
+function addEdges(group, defaultColor = 0x2a3f22) {
+  const mats = []
+  group.traverse(c => {
+    if (c.isMesh && c.geometry.type === 'BoxGeometry') {
+      const mat = new THREE.LineBasicMaterial({ color: defaultColor })
+      c.add(new THREE.LineSegments(new THREE.EdgesGeometry(c.geometry), mat))
+      mats.push(mat)
+    }
+  })
+  group.userData.edgeMats = mats
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLATFORM
+// ─────────────────────────────────────────────────────────────
+;(function buildPlatform() {
+  const cols = 9, rows = 4
+  const tSize = 1.55, tH = 0.14, gap = 0.06, step = tSize + gap
+  const ox = -(cols - 1) * step / 2
+  const oz = -(rows - 1) * step / 2
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      const alt = (c + r) % 2
+      const geo = new THREE.BoxGeometry(tSize, tH, tSize)
+      const mat = new THREE.MeshPhongMaterial({ color: alt ? 0x0d1a13 : 0x0b1810, shininess: 4 })
+      const tile = new THREE.Mesh(geo, mat)
+      tile.position.set(ox + c * step, -tH / 2, oz + r * step)
+      tile.receiveShadow = true
+      scene.add(tile)
+      // subtle tile edge
+      const el = new THREE.LineSegments(
+        new THREE.EdgesGeometry(geo),
+        new THREE.LineBasicMaterial({ color: 0x162614, transparent: true, opacity: 0.7 })
+      )
+      tile.add(el)
+    }
+  }
+})()
+
+// ─────────────────────────────────────────────────────────────
+// ITEM CREATORS
+// ─────────────────────────────────────────────────────────────
+
+function createBackpack() {
+  const g = new THREE.Group()
+
+  const NAVY   = 0x1e3056  // main body
+  const DNAV   = 0x111e38  // dark panel / lower
+  const LNAV   = 0x2a4070  // lid lighter
+  const ACCENT = 0x3677d4  // bright blue zippers
+  const BLK    = 0x181820  // straps / hardware
+
+  // main body
+  const body = box(0.64, 1.05, 0.45, NAVY, 20)
+  body.position.y = 0.585
+
+  // lower sleeping-bag compartment
+  const lower = box(0.64, 0.22, 0.44, DNAV, 10)
+  lower.position.y = 0.11
+
+  // lid cap
+  const lid = box(0.64, 0.22, 0.46, LNAV, 25)
+  lid.position.y = 1.21
+
+  // lid cinch ring
+  const lidCon = box(0.58, 0.05, 0.42, DNAV, 15)
+  lidCon.position.y = 1.10
+
+  // front diagonal dark panel (Gregory signature)
+  const fPanel = box(0.56, 0.66, 0.06, DNAV, 15)
+  fPanel.position.set(0.04, 0.76, 0.275)
+  fPanel.rotation.z = -0.05
+
+  // lower front zippered pocket
+  const fPocket = box(0.52, 0.28, 0.07, DNAV, 15)
+  fPocket.position.set(0, 0.30, 0.27)
+
+  // zipper accent stripe
+  const zip1 = box(0.46, 0.025, 0.04, ACCENT, 60)
+  zip1.position.set(0, 0.445, 0.315)
+
+  // zipper pull tab
+  const zipPull = box(0.03, 0.07, 0.025, ACCENT, 60)
+  zipPull.position.set(-0.21, 0.47, 0.33)
+
+  // hip belt L
+  const hipL = box(0.14, 0.11, 0.30, DNAV, 10)
+  hipL.position.set(-0.39, 0.10, 0.07)
+  hipL.rotation.y = 0.45
+
+  // hip belt R
+  const hipR = box(0.14, 0.11, 0.30, DNAV, 10)
+  hipR.position.set( 0.39, 0.10, 0.07)
+  hipR.rotation.y = -0.45
+
+  // hip buckle L
+  const buckL = box(0.07, 0.07, 0.04, BLK, 20)
+  buckL.position.set(-0.26, 0.10, 0.22)
+
+  // hip buckle R
+  const buckR = box(0.07, 0.07, 0.04, BLK, 20)
+  buckR.position.set( 0.26, 0.10, 0.22)
+
+  // shoulder strap L
+  const strL = box(0.12, 0.74, 0.08, BLK, 10)
+  strL.position.set(-0.34, 0.72, 0.12)
+  strL.rotation.z =  0.18
+  strL.rotation.x = -0.15
+
+  // shoulder strap R
+  const strR = box(0.12, 0.74, 0.08, BLK, 10)
+  strR.position.set( 0.34, 0.72, 0.12)
+  strR.rotation.z = -0.18
+  strR.rotation.x = -0.15
+
+  // sternum strap
+  const sternum = box(0.28, 0.04, 0.04, DNAV, 10)
+  sternum.position.set(0, 0.78, 0.20)
+
+  // compression straps (upper pair)
+  const cmpL1 = box(0.04, 0.34, 0.05, BLK, 5)
+  cmpL1.position.set(-0.34, 0.72, 0)
+  const cmpR1 = cmpL1.clone()
+  cmpR1.position.set( 0.34, 0.72, 0)
+
+  // compression straps (lower pair)
+  const cmpL2 = box(0.04, 0.26, 0.05, BLK, 5)
+  cmpL2.position.set(-0.34, 0.31, 0)
+  const cmpR2 = cmpL2.clone()
+  cmpR2.position.set( 0.34, 0.31, 0)
+
+  // top haul handle
+  const handle = box(0.18, 0.07, 0.06, BLK, 10)
+  handle.position.set(0, 1.36, 0)
+
+  // lid accent stripe (bright blue)
+  const lidAcc = box(0.58, 0.03, 0.04, ACCENT, 60)
+  lidAcc.position.set(0, 1.10, 0.235)
+
+  // bottom buckles
+  const bbL = box(0.06, 0.06, 0.04, BLK, 20)
+  bbL.position.set(-0.22, 0.01, 0.22)
+  const bbR = bbL.clone()
+  bbR.position.set( 0.22, 0.01, 0.22)
+
+  g.add(
+    body, lower, lid, lidCon,
+    fPanel, fPocket, zip1, zipPull,
+    hipL, hipR, buckL, buckR,
+    strL, strR, sternum,
+    cmpL1, cmpR1, cmpL2, cmpR2,
+    handle, lidAcc, bbL, bbR
+  )
+  return g
+}
+
+function createTent() {
+  const g = new THREE.Group()
+
+  const floor = box(1.45, 0.05, 0.92, 0x1c2e1c)
+  floor.position.y = 0.025
+
+  const ang = Math.PI / 5.8
+  const panelL = box(0.07, 1.05, 0.95, 0xd45c1a, 8)
+  panelL.position.set(-0.38, 0.56, 0)
+  panelL.rotation.z = -ang
+
+  const panelR = box(0.07, 1.05, 0.95, 0xb84a14, 8)
+  panelR.position.set(0.38, 0.56, 0)
+  panelR.rotation.z = ang
+
+  const ridge = cyl(0.028, 0.028, 0.97, 0x7a3010, 6)
+  ridge.rotation.x = Math.PI / 2
+  ridge.position.y = 1.0
+
+  const peg1 = cyl(0.015, 0.02, 0.22, 0x666666, 5)
+  peg1.position.set(-0.82, 0.11, 0.44)
+  peg1.rotation.z = 0.35
+
+  const peg2 = peg1.clone()
+  peg2.position.set(-0.82, 0.11, -0.44)
+  peg2.rotation.z = 0.35
+
+  const guyL = cyl(0.007, 0.007, 0.58, 0x888888, 4)
+  guyL.position.set(-0.6, 0.68, 0.46)
+  guyL.rotation.z = Math.PI / 3.2
+  guyL.rotation.x = 0.05
+
+  const guyR = guyL.clone()
+  guyR.position.set(-0.6, 0.68, -0.46)
+
+  g.add(floor, panelL, panelR, ridge, peg1, peg2, guyL, guyR)
+  return g
+}
+
+function createBottle() {
+  const g = new THREE.Group()
+
+  const body  = cyl(0.19, 0.21, 1.0, 0x1a4fd6, 16, 30, { transparent: true, opacity: 0.82 })
+  body.position.y = 0.5
+
+  const base  = cyl(0.21, 0.21, 0.07, 0x0e2d7a, 16)
+  base.position.y = 0.035
+
+  const neck  = cyl(0.13, 0.19, 0.11, 0x1a4fd6, 16)
+  neck.position.y = 1.055
+
+  const cap   = cyl(0.155, 0.155, 0.13, 0x0d2560, 16)
+  cap.position.y = 1.175
+
+  const nozzle = cyl(0.055, 0.1, 0.1, 0x0a1f4a, 10)
+  nozzle.position.y = 1.285
+
+  // water fill
+  const water = cyl(0.17, 0.19, 0.68, 0x2255cc, 16, 10, { transparent: true, opacity: 0.35 })
+  water.position.y = 0.37
+
+  // label
+  const label = cyl(0.215, 0.215, 0.32, 0xffffff, 16, 5, { transparent: true, opacity: 0.1 })
+  label.position.y = 0.53
+
+  g.add(body, base, neck, cap, nozzle, water, label)
+  return g
+}
+
+function createHeadlamp() {
+  const g = new THREE.Group()
+
+  const main = box(0.7, 0.36, 0.33, 0x1e1e1e, 8)
+  main.position.y = 0.18
+
+  const lens = cyl(0.17, 0.19, 0.09, 0x222830, 16, 25)
+  lens.rotation.x = Math.PI / 2
+  lens.position.set(0, 0.24, 0.21)
+
+  const beam = cyl(0.13, 0.145, 0.06, 0xf0d820, 16, 90, {
+    emissive: new THREE.Color(0x996600), emissiveIntensity: 0.6
+  })
+  beam.rotation.x = Math.PI / 2
+  beam.position.set(0, 0.24, 0.255)
+
+  const strap = box(0.78, 0.07, 0.05, 0x2a2a2a)
+  strap.position.set(0, 0.38, -0.1)
+
+  const btn1 = box(0.12, 0.1, 0.07, 0x111111)
+  btn1.position.set(0.24, 0.37, 0.18)
+  const btn2 = box(0.09, 0.08, 0.06, 0x111111)
+  btn2.position.set(-0.22, 0.36, 0.18)
+
+  g.add(main, lens, beam, strap, btn1, btn2)
+  return g
+}
+
+function createPoles() {
+  const g = new THREE.Group()
+
+  function pole(ox) {
+    const pg = new THREE.Group()
+    const upper = cyl(0.033, 0.038, 1.25, 0x9ca3af, 7)
+    upper.position.y = 1.53
+
+    const mid   = cyl(0.028, 0.033, 0.7, 0x7a8390, 7)
+    mid.position.y = 0.83
+
+    const lower = cyl(0.005, 0.028, 0.38, 0x626970, 7)
+    lower.position.y = 0.19
+
+    const handle = cyl(0.052, 0.042, 0.3, 0x111111, 8)
+    handle.position.y = 2.11
+
+    const torus = new THREE.Mesh(
+      new THREE.TorusGeometry(0.058, 0.011, 5, 14),
+      ph(0x3a3a3a)
+    )
+    torus.rotation.x = Math.PI / 2
+    torus.position.y = 2.28
+
+    const basket = cyl(0.11, 0.11, 0.035, 0x111111, 8)
+    basket.position.y = 0.33
+
+    const clip1 = box(0.055, 0.045, 0.085, 0xd4ac0d, 50)
+    clip1.position.set(0, 1.26, 0.04)
+    const clip2 = box(0.055, 0.045, 0.085, 0xd4ac0d, 50)
+    clip2.position.set(0, 0.95, 0.04)
+
+    pg.add(upper, mid, lower, handle, torus, basket, clip1, clip2)
+    pg.position.x = ox
+    pg.rotation.z = ox * -0.07
+    return pg
+  }
+
+  g.add(pole(-0.28), pole(0.28))
+  return g
+}
+
+function createSleepingBag() {
+  const g = new THREE.Group()
+
+  const body = cyl(0.295, 0.295, 1.35, 0x157a7a, 16)
+  body.scale.x = 0.78; body.scale.z = 0.78
+  body.position.y = 0.68
+
+  const foot = cyl(0.28, 0.08, 0.22, 0x0f5858, 16)
+  foot.scale.x = 0.78; foot.scale.z = 0.78
+  foot.position.y = 0.11
+
+  const head = cyl(0.26, 0.295, 0.1, 0x1a8888, 16)
+  head.scale.x = 0.78; head.scale.z = 0.78
+  head.position.y = 1.4
+
+  const zip = box(0.055, 1.2, 0.04, 0x0a4040)
+  zip.position.set(0.265, 0.68, 0)
+
+  for (let i = 0; i < 4; i++) {
+    const s = cyl(0.299, 0.299, 0.055, 0x1a6e6e, 16, 5, { transparent: true, opacity: 0.45 })
+    s.scale.x = 0.78; s.scale.z = 0.78
+    s.position.y = 0.25 + i * 0.38
+    g.add(s)
+  }
+
+  g.add(body, foot, head, zip)
+  return g
+}
+
+function createJacket() {
+  const g = new THREE.Group()
+
+  const torso = box(0.88, 0.7, 0.38, 0x72b032, 14)
+  torso.position.y = 0.35
+
+  const hood = box(0.54, 0.3, 0.36, 0x82bc3a, 12)
+  hood.position.y = 0.86
+
+  const hoodF = box(0.44, 0.2, 0.08, 0x72b032)
+  hoodF.position.set(0, 0.86, 0.22)
+
+  const slL = box(0.28, 0.16, 0.52, 0x72b032, 12)
+  slL.position.set(-0.58, 0.5, 0); slL.rotation.y = -0.12
+  const cuffL = box(0.26, 0.12, 0.5, 0x5a8c28)
+  cuffL.position.set(-0.58, 0.5, -0.34); cuffL.rotation.y = -0.12
+
+  const slR = box(0.28, 0.16, 0.52, 0x72b032, 12)
+  slR.position.set(0.58, 0.5, 0); slR.rotation.y = 0.12
+  const cuffR = box(0.26, 0.12, 0.5, 0x5a8c28)
+  cuffR.position.set(0.58, 0.5, -0.34); cuffR.rotation.y = 0.12
+
+  const pocket = box(0.25, 0.19, 0.055, 0x5a8c28)
+  pocket.position.set(-0.22, 0.52, 0.22)
+
+  const zipper = box(0.045, 0.58, 0.04, 0xddddcc, 50)
+  zipper.position.set(0, 0.34, 0.2)
+
+  const seam = box(0.9, 0.035, 0.04, 0x5a8c28)
+  seam.position.set(0, 0.68, 0.2)
+
+  const pitzip = box(0.035, 0.22, 0.045, 0x5a8c28)
+  pitzip.position.set(-0.44, 0.5, 0.19)
+
+  g.add(torso, hood, hoodF, slL, cuffL, slR, cuffR, pocket, zipper, seam, pitzip)
+  return g
+}
+
+function createWatch() {
+  const g = new THREE.Group()
+
+  const bezel = box(0.52, 0.12, 0.52, 0x253545)
+  bezel.position.y = 0.06
+
+  const body  = box(0.48, 0.14, 0.48, 0x1c2a38, 15)
+  body.position.y = 0.07
+
+  const screen = box(0.35, 0.015, 0.35, 0x1a3fd6, 90, {
+    emissive: new THREE.Color(0x091560), emissiveIntensity: 0.7
+  })
+  screen.position.y = 0.148
+
+  const screenGlow = box(0.26, 0.01, 0.26, 0x5588ff, 100, {
+    emissive: new THREE.Color(0x2244cc), emissiveIntensity: 1.0
+  })
+  screenGlow.position.y = 0.16
+
+  const b1 = box(0.05, 0.06, 0.08, 0x2e4458); b1.position.set(0.29, 0.09, -0.12)
+  const b2 = box(0.05, 0.06, 0.08, 0x2e4458); b2.position.set(0.29, 0.09, 0.07)
+  const b3 = box(0.05, 0.05, 0.06, 0x2e4458); b3.position.set(-0.29, 0.09, 0)
+
+  const bT1 = box(0.38, 0.11, 0.15, 0x182030); bT1.position.set(0, 0.055, 0.33)
+  const bT2 = box(0.35, 0.1,  0.13, 0x182030); bT2.position.set(0, 0.05,  0.46)
+  const bT3 = box(0.32, 0.09, 0.11, 0x182030); bT3.position.set(0, 0.045, 0.57)
+
+  const bB1 = box(0.38, 0.11, 0.15, 0x182030); bB1.position.set(0, 0.055, -0.33)
+  const bB2 = box(0.35, 0.1,  0.13, 0x182030); bB2.position.set(0, 0.05,  -0.46)
+  const bB3 = box(0.32, 0.09, 0.11, 0x182030); bB3.position.set(0, 0.045, -0.57)
+
+  const buckle = box(0.3, 0.07, 0.09, 0x4a6680); buckle.position.set(0, 0.035, -0.66)
+
+  const crown  = cyl(0.035, 0.035, 0.09, 0x556677, 7)
+  crown.rotation.z = Math.PI / 2; crown.position.set(0.305, 0.07, 0)
+
+  g.add(bezel, body, screen, screenGlow, b1, b2, b3,
+        bT1, bT2, bT3, bB1, bB2, bB3, buckle, crown)
+  return g
+}
+
+// ─────────────────────────────────────────────────────────────
+function createRack() {
+  const g = new THREE.Group()
+  const IRON  = 0x2e2e3e
+  const STEEL = 0x7a7a8e
+
+  // horizontal rod
+  const rod = box(4.0, 0.07, 0.07, STEEL, 48)
+  rod.position.set(-4.0, 2.1, -1.5)
+
+  // vertical posts
+  const postL = box(0.08, 2.15, 0.08, IRON, 22)
+  postL.position.set(-5.95, 1.075, -1.5)
+  const postR = box(0.08, 2.15, 0.08, IRON, 22)
+  postR.position.set(-2.05, 1.075, -1.5)
+
+  // mid cross brace
+  const brace = box(4.0, 0.045, 0.045, IRON, 18)
+  brace.position.set(-4.0, 1.15, -1.5)
+
+  // base feet (front-back)
+  const footL = box(0.07, 0.07, 0.52, IRON, 16)
+  footL.position.set(-5.95, 0.035, -1.32)
+  const footR = box(0.07, 0.07, 0.52, IRON, 16)
+  footR.position.set(-2.05, 0.035, -1.32)
+
+  // hook for Gregory (x=-3.0) — arm + tip
+  const hkArmL = box(0.045, 0.045, 0.22, STEEL, 40)
+  hkArmL.position.set(-5.0, 2.06, -1.39)
+  const hkTipL = box(0.045, 0.16, 0.045, STEEL, 40)
+  hkTipL.position.set(-5.0, 1.98, -1.28)
+
+  // hook for Naturehike (x=-5.0)
+  const hkArmR = box(0.045, 0.045, 0.22, STEEL, 40)
+  hkArmR.position.set(-3.0, 2.06, -1.39)
+  const hkTipR = box(0.045, 0.16, 0.045, STEEL, 40)
+  hkTipR.position.set(-3.0, 1.98, -1.28)
+
+  g.add(rod, postL, postR, brace, footL, footR, hkArmL, hkTipL, hkArmR, hkTipR)
+  return g
+}
+
+function createNaturehike() {
+  const g = new THREE.Group()
+
+  const BLK  = 0x111118  // main body black
+  const DBLK = 0x0a0a10  // darker black
+  const CHARCOAL = 0x2a2a35  // lid / accents
+  const SIL  = 0x6a6a7a  // silver compression straps
+  const GOLD = 0xaa8020  // gold buckles
+
+  // main body (taller than Gregory — 70L)
+  const body = box(0.66, 1.22, 0.48, BLK, 18)
+  body.position.y = 0.68
+
+  // lower sleeping-bag compartment
+  const lower = box(0.66, 0.22, 0.47, DBLK, 10)
+  lower.position.y = 0.11
+
+  // lid (large dome)
+  const lid = box(0.64, 0.26, 0.48, CHARCOAL, 22)
+  lid.position.y = 1.38
+
+  // lid cinch
+  const lidCon = box(0.58, 0.055, 0.44, DBLK, 14)
+  lidCon.position.y = 1.26
+
+  // internal frame rails (side)
+  const frameL = box(0.05, 1.0, 0.06, CHARCOAL, 18)
+  frameL.position.set(-0.29, 0.72, -0.25)
+  const frameR = box(0.05, 1.0, 0.06, CHARCOAL, 18)
+  frameR.position.set( 0.29, 0.72, -0.25)
+
+  // front X-compression straps (diagonal left)
+  const xL1 = box(0.04, 0.82, 0.055, SIL, 28)
+  xL1.position.set(-0.14, 0.82, 0.28)
+  xL1.rotation.z = 0.42
+
+  // front X-compression straps (diagonal right)
+  const xR1 = box(0.04, 0.82, 0.055, SIL, 28)
+  xR1.position.set( 0.14, 0.82, 0.28)
+  xR1.rotation.z = -0.42
+
+  // horizontal compression strap (middle)
+  const hMid = box(0.62, 0.035, 0.055, SIL, 18)
+  hMid.position.set(0, 0.82, 0.29)
+
+  // horizontal compression strap (lower)
+  const hLow = box(0.62, 0.035, 0.055, SIL, 18)
+  hLow.position.set(0, 0.44, 0.29)
+
+  // buckle at X-cross center
+  const crossBuck = box(0.07, 0.07, 0.045, DBLK, 26)
+  crossBuck.position.set(0, 0.82, 0.31)
+
+  // side compression strap L (upper)
+  const scLU = box(0.045, 0.42, 0.055, SIL, 14)
+  scLU.position.set(-0.35, 0.88, 0)
+  // side compression strap R (upper)
+  const scRU = box(0.045, 0.42, 0.055, SIL, 14)
+  scRU.position.set( 0.35, 0.88, 0)
+  // side compression strap L (lower)
+  const scLL = box(0.045, 0.32, 0.055, SIL, 14)
+  scLL.position.set(-0.35, 0.38, 0)
+  // side compression strap R (lower)
+  const scRL = box(0.045, 0.32, 0.055, SIL, 14)
+  scRL.position.set( 0.35, 0.38, 0)
+
+  // shoulder strap L
+  const strL = box(0.13, 0.82, 0.085, DBLK, 10)
+  strL.position.set(-0.35, 0.78, 0.12)
+  strL.rotation.z =  0.17
+  strL.rotation.x = -0.13
+
+  // shoulder strap R
+  const strR = box(0.13, 0.82, 0.085, DBLK, 10)
+  strR.position.set( 0.35, 0.78, 0.12)
+  strR.rotation.z = -0.17
+  strR.rotation.x = -0.13
+
+  // hip belt L
+  const hipL = box(0.15, 0.12, 0.30, DBLK, 10)
+  hipL.position.set(-0.40, 0.11, 0.07)
+  hipL.rotation.y = 0.45
+  // hip belt R
+  const hipR = box(0.15, 0.12, 0.30, DBLK, 10)
+  hipR.position.set( 0.40, 0.11, 0.07)
+  hipR.rotation.y = -0.45
+
+  // hip buckle L/R (gold — Naturehike signature colour)
+  const buckL = box(0.08, 0.08, 0.045, GOLD, 32)
+  buckL.position.set(-0.27, 0.11, 0.22)
+  const buckR = box(0.08, 0.08, 0.045, GOLD, 32)
+  buckR.position.set( 0.27, 0.11, 0.22)
+
+  // sternum strap
+  const sternum = box(0.30, 0.04, 0.045, SIL, 18)
+  sternum.position.set(0, 0.90, 0.20)
+
+  // top handle
+  const handle = box(0.19, 0.08, 0.065, DBLK, 12)
+  handle.position.set(0, 1.54, 0)
+
+  g.add(
+    body, lower, lid, lidCon,
+    frameL, frameR,
+    xL1, xR1, hMid, hLow, crossBuck,
+    scLU, scRU, scLL, scRL,
+    strL, strR,
+    hipL, hipR, buckL, buckR,
+    sternum, handle,
+  )
+  return g
+}
+
+// PLACE ITEMS
+// ─────────────────────────────────────────────────────────────
+const CREATORS = [
+  createBackpack, createTent, createBottle, createHeadlamp,
+  createPoles, createSleepingBag, createJacket, createWatch,
+  createNaturehike,
+]
+
+const BASE_POS = [
+  new THREE.Vector3(-3.0, 0.60, -1.2),  // Gregory — hanging
+  new THREE.Vector3(-1.0, 0,    -1.2),
+  new THREE.Vector3( 1.0, 0,    -1.2),
+  new THREE.Vector3( 3.0, 0,    -1.2),
+  new THREE.Vector3(-3.0, 0,     1.2),
+  new THREE.Vector3(-1.0, 0,     1.2),
+  new THREE.Vector3( 1.0, 0,     1.2),
+  new THREE.Vector3( 3.0, 0,     1.2),
+  new THREE.Vector3(-5.0, 0.56, -1.2),  // Naturehike — hanging
+]
+
+const itemGroups = CREATORS.map((create, i) => {
+  const g = create()
+  addEdges(g)
+  g.traverse(c => {
+    if (c.isMesh) {
+      c.castShadow = true; c.receiveShadow = true
+      c.userData.group = g
+    }
+  })
+  g.position.copy(BASE_POS[i])
+  g.userData.index    = i
+  g.userData.floatPh  = i * (Math.PI * 2 / 9)
+  g.userData.scaleTarget = 0
+  g.scale.setScalar(0)
+  scene.add(g)
+  return g
+})
+
+// staggered entrance
+itemGroups.forEach((g, i) => {
+  setTimeout(() => { g.userData.scaleTarget = 1 }, 500 + i * 130)
+})
+
+// display rack for backpacks
+const rack = createRack()
+addEdges(rack, 0x404055)
+rack.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true } })
+scene.add(rack)
+
+// raycasting target list
+const allMeshes = []
+itemGroups.forEach(g => g.traverse(c => { if (c.isMesh) allMeshes.push(c) }))
+
+// ─────────────────────────────────────────────────────────────
+// LABELS
+// ─────────────────────────────────────────────────────────────
+const labelEls = itemGroups.map((g, i) => {
+  const el = document.createElement('div')
+  el.className = 'item-label'
+  el.textContent = GEAR[i].name
+  el.style.opacity = '0'
+  document.body.appendChild(el)
+  return el
+})
+
+function worldToScreen(pos) {
+  const v = pos.clone().project(camera)
+  const w = renderer.domElement.clientWidth
+  const h = renderer.domElement.clientHeight
+  return new THREE.Vector2((v.x + 1) / 2 * w, (-v.y + 1) / 2 * h)
+}
+
+function updateLabels() {
+  itemGroups.forEach((g, i) => {
+    const lp = g.position.clone()
+    lp.y -= 0.5
+    const sc = worldToScreen(lp)
+    const el = labelEls[i]
+    const isActive = hoveredItem === g || selectedItem === g
+    el.style.transform = `translate(calc(${sc.x}px - 50%), calc(${sc.y}px - 50%))`
+    el.style.opacity   = g.scale.x > 0.5 ? (isActive ? '1' : '0.4') : '0'
+    el.style.color     = isActive ? '#a8b879' : '#ede7d5'
+  })
+}
+
+// ─────────────────────────────────────────────────────────────
+// PANEL
+// ─────────────────────────────────────────────────────────────
+const panel     = document.getElementById('gear-panel')
+const pClose    = document.getElementById('panel-close')
+const pTags     = document.getElementById('panel-tags')
+const pName     = document.getElementById('panel-name')
+const pNameEn   = document.getElementById('panel-name-en')
+const pDesc     = document.getElementById('panel-desc')
+const pPrice    = document.getElementById('panel-price')
+const pBuy      = document.getElementById('panel-buy')
+const pTips     = document.getElementById('panel-tips')
+
+function openPanel(data) {
+  pTags.innerHTML     = data.tags.map(t => `<span class="p-tag">${t}</span>`).join('')
+  pName.textContent   = data.name
+  pNameEn.textContent = data.nameEn
+  pDesc.textContent   = data.desc
+  pPrice.textContent  = data.price
+  pTips.innerHTML     = data.tips.map(t => `<li>${t}</li>`).join('')
+  if (data.link) {
+    pBuy.href = data.link
+    pBuy.style.display = 'flex'
+  } else {
+    pBuy.style.display = 'none'
+  }
+  panel.classList.add('open')
+}
+function closePanel() {
+  panel.classList.remove('open')
+  selectedItem = null
+}
+pClose.addEventListener('click', closePanel)
+
+// ─────────────────────────────────────────────────────────────
+// INTERACTION
+// ─────────────────────────────────────────────────────────────
+let hoveredItem  = null
+let selectedItem = null
+const raycaster  = new THREE.Raycaster()
+const mouse      = new THREE.Vector2()
+
+function hitTest(cx, cy) {
+  const rect = renderer.domElement.getBoundingClientRect()
+  mouse.x =  ((cx - rect.left) / rect.width)  * 2 - 1
+  mouse.y = -((cy - rect.top)  / rect.height) * 2 + 1
+  raycaster.setFromCamera(mouse, camera)
+  const hits = raycaster.intersectObjects(allMeshes, false)
+  return hits.length > 0 ? hits[0].object.userData.group : null
+}
+
+renderer.domElement.addEventListener('mousemove', e => {
+  hoveredItem = hitTest(e.clientX, e.clientY)
+  renderer.domElement.style.cursor = hoveredItem ? 'pointer' : 'default'
+})
+
+renderer.domElement.addEventListener('click', e => {
+  const hit = hitTest(e.clientX, e.clientY)
+  if (hit) {
+    selectedItem = hit
+    openPanel(GEAR[hit.userData.index])
+  } else {
+    closePanel()
+  }
+})
+
+renderer.domElement.addEventListener('touchend', e => {
+  const t = e.changedTouches[0]
+  const hit = hitTest(t.clientX, t.clientY)
+  if (hit) {
+    selectedItem = hit
+    openPanel(GEAR[hit.userData.index])
+  } else {
+    closePanel()
+  }
+}, { passive: true })
+
+// ─────────────────────────────────────────────────────────────
+// ANIMATION LOOP
+// ─────────────────────────────────────────────────────────────
+const clock = new THREE.Clock()
+
+function animate() {
+  requestAnimationFrame(animate)
+  const t = clock.getElapsedTime()
+
+  itemGroups.forEach(g => {
+    // entrance scale
+    const st = g.userData.scaleTarget
+    if (st !== undefined) {
+      const cur = g.scale.x
+      const next = cur + (st - cur) * 0.09
+      g.scale.setScalar(Math.abs(next - st) < 0.001 ? st : next)
+    }
+
+    // float
+    const isActive = hoveredItem === g || selectedItem === g
+    const floatY = (isActive ? 0.38 : 0) + Math.sin(t * 0.75 + g.userData.floatPh) * 0.07
+    const targetY = BASE_POS[g.userData.index].y + floatY
+    g.position.y += (targetY - g.position.y) * 0.08
+
+    // edge color
+    const eColor = isActive ? 0xa8b879 : 0x2a3f22
+    if (g.userData.edgeMats) {
+      g.userData.edgeMats.forEach(m => m.color.setHex(eColor))
+    }
+  })
+
+  updateLabels()
+  renderer.render(scene, camera)
+}
+
+// ─────────────────────────────────────────────────────────────
+// RESIZE
+// ─────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  updateCamera()
+})
+
+animate()
+
+// sync renderer bg with theme changes
+function syncSceneBg() {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue('--forest-950').trim()
+  if (raw) {
+    const c = new THREE.Color(raw)
+    renderer.setClearColor(c)
+    scene.fog = new THREE.FogExp2(c.getHex(), 0.018)
+  }
+}
+syncSceneBg()
+new MutationObserver(syncSceneBg).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+  </script>
+
+  <script>
+    import '../scripts/theme-switcher.ts'
+  </script>
+</body>
+</html>
