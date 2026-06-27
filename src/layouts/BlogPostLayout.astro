@@ -3,12 +3,14 @@ import '../styles/global.css';
 import ThemeSwitcher from '../components/ThemeSwitcher.astro';
 
 const { frontmatter } = Astro.props;
-const { title, description, date, tags, image, coords, name, location } = frontmatter;
+const { title, description, date, tags, image, coords, name, nameEn, location, difficulty, walkDuration } = frontmatter;
 
 // Prefix internal absolute paths with the deploy base (/proton-path)
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const withBase = (p: string) => `${base}${p.startsWith('/') ? p : `/${p}`}`;
 const heroImage = image ? withBase(image) : undefined;
+const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const ogImage = heroImage && Astro.site ? new URL(heroImage, Astro.site).href : undefined;
 
 // Google Maps directions link from the trail coordinates
 const mapsUrl = coords
@@ -21,6 +23,31 @@ const dateFmt = new Intl.DateTimeFormat('th-TH', {
 	year: 'numeric'
 });
 const formattedDate = date ? dateFmt.format(new Date(date)) : '';
+
+const siteTitle = 'Proton Path';
+const pageTitle = `${title} - ${siteTitle}`;
+const metaDesc = description || title;
+
+const jsonLd = JSON.stringify({
+	'@context': 'https://schema.org',
+	'@type': 'BlogPosting',
+	headline: title,
+	description: metaDesc,
+	...(ogImage ? { image: ogImage } : {}),
+	datePublished: date,
+	author: {
+		'@type': 'Person',
+		name: 'Proton Path',
+		url: Astro.site?.href
+	},
+	publisher: {
+		'@type': 'Organization',
+		name: siteTitle,
+		url: Astro.site?.href
+	},
+	...(canonicalUrl ? { url: canonicalUrl, mainEntityOfPage: canonicalUrl } : {}),
+	...(location ? { locationCreated: { '@type': 'Place', name: (nameEn || name) + ', ' + location + ', Thailand' } } : {})
+});
 ---
 
 <html lang="th">
@@ -29,11 +56,28 @@ const formattedDate = date ? dateFmt.format(new Date(date)) : '';
 		<link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<meta name="description" content={description || title} />
+		{canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+		<title>{pageTitle}</title>
+		<meta name="description" content={metaDesc} />
+
+		<meta property="og:type" content="article" />
+		<meta property="og:site_name" content={siteTitle} />
+		<meta property="og:locale" content="th_TH" />
 		<meta property="og:title" content={title} />
-		<meta property="og:description" content={description || title} />
-		{heroImage && <meta property="og:image" content={new URL(heroImage, Astro.site)} />}
-		<title>{title} - Proton Path</title>
+		<meta property="og:description" content={metaDesc} />
+		{canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+		{ogImage && <meta property="og:image" content={ogImage} />}
+		{ogImage && <meta property="og:image:width" content="1080" />}
+		{ogImage && <meta property="og:image:height" content="1080" />}
+		{date && <meta property="article:published_time" content={new Date(date).toISOString()} />}
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={metaDesc} />
+		{ogImage && <meta name="twitter:image" content={ogImage} />}
+
+		<script type="application/ld+json" set:html={jsonLd} />
 	</head>
 	<body>
 		<a class="skip-link" href="#content">ข้ามไปยังเนื้อหา</a>
