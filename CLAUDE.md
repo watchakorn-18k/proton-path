@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Always invoke the `/karpathy-guidelines` skill at the start of every coding task in this repository.
 
+## 3D model skills (Three.js)
+
+**Always invoke `/threejs-gear-model` before editing or creating any 3D model in `src/pages/gear.astro`.** This applies to new gear items, redesigned models, and scene props (racks, shelves, etc.).
+
+| Skill | When to use |
+|---|---|
+| `/threejs-gear-model` | Adding a new gear item, redesigning an existing model, or creating scene props (racks, shelves). Covers primitives (`box`/`cyl`), palette conventions, Y-origin rule, grid layout, hanging items, edge wireframe, and common mistakes. |
+
 ## Animation skills (GSAP)
 
 GSAP skills are installed in `.claude/skills/`. Use them when building animations for this site (hero motion, scroll-driven reveals, route-log transitions, etc.). Reach for GSAP over hand-rolled CSS/JS animation.
