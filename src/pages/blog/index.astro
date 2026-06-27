@@ -20,6 +20,26 @@ const dateFmt = new Intl.DateTimeFormat('th-TH', {
 	month: 'short',
 	year: 'numeric'
 });
+
+const timelinePosts = [...posts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+const tlMin = new Date(timelinePosts[0].date).getTime();
+const tlMax = new Date(timelinePosts[timelinePosts.length - 1].date).getTime();
+const tlRange = tlMax - tlMin || 1;
+const tlPct = (d) => ((new Date(d).getTime() - tlMin) / tlRange * 100).toFixed(2);
+const tlMinYear = new Date(timelinePosts[0].date).getFullYear();
+const tlYearMarkers = [];
+for (let y = tlMinYear + 1; y <= new Date(timelinePosts[timelinePosts.length - 1].date).getFullYear(); y++) {
+	const pct = ((new Date(`${y}-01-01`).getTime() - tlMin) / tlRange * 100).toFixed(2);
+	if (parseFloat(pct) > 5) tlYearMarkers.push({ year: y, pct });
+}
+const tlDiffColor = {
+	'ยากมาก': '#e05252',
+	'ยาก': '#d4845a',
+	'ปานกลาง': '#a8b879',
+	'ง่าย': '#8cc5a0',
+	'ง่ายมาก': '#7ab8d6',
+};
+const tlDiffLabels = ['ยากมาก', 'ยาก', 'ปานกลาง', 'ง่าย', 'ง่ายมาก'];
 ---
 
 <html lang="th">
@@ -45,6 +65,8 @@ const dateFmt = new Intl.DateTimeFormat('th-TH', {
 				<a href={withBase('/#video')}>คลิปล่าสุด</a>
 				<a href={withBase('/#route')}>เส้นทาง</a>
 				<a href={withBase('/#about')}>เกี่ยวกับ</a>
+				<a href={withBase('/blog/')} class="active">บล็อก</a>
+				<a href={withBase('/gear/')}>อุปกรณ์</a>
 				<a href={youtubeUrl} target="_blank" rel="noopener noreferrer">YouTube</a>
 			</nav>
 			<ThemeSwitcher />
@@ -57,6 +79,40 @@ const dateFmt = new Intl.DateTimeFormat('th-TH', {
 				<p class="blog-index-lede">
 					เรื่องเล่าจากป่า เส้นทาง และการเดินทางที่บันทึกไว้เพื่อให้ผู้ที่สนใจได้อ่านและเตรียมตัว
 				</p>
+			</div>
+
+			<div class="trail-timeline">
+				<div class="trail-timeline-track">
+					<div class="tl-line" />
+					<span class="tl-year" style="left:0;transform:translate(0,-50%)">{tlMinYear}</span>
+					{tlYearMarkers.map(({ year, pct }) => (
+						<span class="tl-year" style={`left:${pct}%`}>{year}</span>
+					))}
+					{timelinePosts.map((post, i) => (
+						<a
+							href={withBase(`/blog/${post.slug}/`)}
+							class={`tl-dot ${i % 2 === 0 ? 'above' : 'below'}`}
+							style={`left:${tlPct(post.date)}%`}
+							title={`${post.name} — ${dateFmt.format(new Date(post.date))}`}
+						>
+							<span class="tl-upper">
+								<span class="tl-lbl">{i % 2 === 0 ? post.name : ''}</span>
+							</span>
+							<span class="tl-mark" style={`background:${tlDiffColor[post.difficulty] ?? '#a8b879'}`} />
+							<span class="tl-lower">
+								<span class="tl-lbl">{i % 2 !== 0 ? post.name : ''}</span>
+							</span>
+						</a>
+					))}
+				</div>
+				<div class="tl-legend">
+					{tlDiffLabels.map(d => (
+						<span class="tl-legend-item">
+							<span class="tl-legend-mark" style={`background:${tlDiffColor[d]}`} />
+							{d}
+						</span>
+					))}
+				</div>
 			</div>
 
 			<div class="blog-grid">
